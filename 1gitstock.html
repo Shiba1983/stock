@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#162030">
+<meta name="robots" content="noindex">
+<title>Bakery &amp; Restaurant Stock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one sticky header (brand, location chips, tabs) over a single working column; sheets slide up for recording stock. */
+:root {
+  --bg: #f3f5f8; --surface: #ffffff; --sunk: #e9edf3; --ink: #162030; --muted: #5a6577; --line: #d9dee7;
+  --accent: #b5600c; --accent-soft: #fbeedd; --accent-ink: #ffffff;
+  --ok: #1d7a4b; --ok-soft: #e1f3e9; --warn: #9a5b00; --warn-soft: #fdf0d6; --bad: #b42318; --bad-soft: #fde4e1;
+  --c0: #c27a12; --c1: #2f6fd0; --c2: #7a4fd0; --c3: #20895a; --c4: #c2416d; --c5: #158a92;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px; --shadow: 0 1px 2px rgba(20,30,50,.06), 0 4px 16px rgba(20,30,50,.06);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e131a; --surface: #161d27; --sunk: #1d2633; --ink: #e7ebf1; --muted: #98a3b4; --line: #2a3443;
+  --accent: #f0a347; --accent-soft: #3a2a14; --accent-ink: #1b1206;
+  --ok: #4cc38a; --ok-soft: #143325; --warn: #f2b351; --warn-soft: #3a2b10; --bad: #ff7b6e; --bad-soft: #3d1a17;
+  --c0: #f0a347; --c1: #6aa3ff; --c2: #ad8cff; --c3: #4cc38a; --c4: #ff7aa6; --c5: #4fc9d1;
+  --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e131a; --surface: #161d27; --sunk: #1d2633; --ink: #e7ebf1; --muted: #98a3b4; --line: #2a3443;
+  --accent: #f0a347; --accent-soft: #3a2a14; --accent-ink: #1b1206;
+  --ok: #4cc38a; --ok-soft: #143325; --warn: #f2b351; --warn-soft: #3a2b10; --bad: #ff7b6e; --bad-soft: #3d1a17;
+  --c0: #f0a347; --c1: #6aa3ff; --c2: #ad8cff; --c3: #4cc38a; --c4: #ff7aa6; --c5: #4fc9d1;
+  --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--ink); }
+body { font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap { max-width: 1100px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 1.25rem; } h3 { font-size: 1.02rem; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header */
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.top-row { display: flex; align-items: center; gap: 12px; padding-block: 12px 8px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; flex: 1 1 auto; min-width: 0; }
+.brand h1 { font-size: 1.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand .tag { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding-block: 2px 8px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-size: .88rem; }
+.chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { border: 0; background: none; padding: 10px 12px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .count { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: var(--bad); color: #fff; font-size: .72rem; text-align: center; }
+
+main { padding-block: 18px 110px; display: grid; gap: 18px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.panel-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 10px; flex-wrap: wrap; }
+.panel-b { padding: 0 16px 14px; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 12px; font-weight: 500; font-size: .9rem; white-space: nowrap; }
+.btn:hover { background: var(--sunk); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.05); background: var(--accent); }
+.btn.danger { color: var(--bad); }
+.btn.sm { padding: 4px 9px; font-size: .82rem; }
+.btn:disabled { opacity: .5; cursor: default; }
+.fab { position: fixed; right: max(18px, calc(env(safe-area-inset-right, 0px) + 18px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); z-index: 6; border-radius: 999px; padding: 13px 20px; font-size: 1rem; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+
+/* Location cards */
+.loc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.loc-card { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 6px; border-top: 4px solid var(--lc, var(--muted)); }
+.loc-card:hover { background: var(--sunk); }
+.loc-card .kind { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.loc-card .name { font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; }
+.loc-card .val { font-family: var(--f-num); font-size: 1.35rem; }
+.loc-card .meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: .82rem; color: var(--muted); }
+
+/* Pills */
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .76rem; font-weight: 600; white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.low { background: var(--warn-soft); color: var(--warn); }
+.pill.out { background: var(--bad-soft); color: var(--bad); }
+.pill.t-in { background: var(--ok-soft); color: var(--ok); }
+.pill.t-use { background: var(--sunk); color: var(--ink); }
+.pill.t-waste { background: var(--bad-soft); color: var(--bad); }
+.pill.t-transfer { background: var(--accent-soft); color: var(--accent); }
+.pill.t-count { background: var(--sunk); color: var(--muted); }
+.lname { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.lname::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--lc, var(--muted)); }
+
+/* Lists */
+.rows { display: grid; }
+.row { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.row:first-child { border-top: 0; }
+.row.click { cursor: pointer; }
+.row.click:hover { background: var(--sunk); }
+.row .main { flex: 1 1 180px; min-width: 0; }
+.row .title { font-weight: 600; }
+.row .sub { font-size: .82rem; color: var(--muted); }
+.qty { text-align: right; min-width: 90px; }
+.qty b { font-family: var(--f-num); font-size: 1.15rem; font-weight: 500; }
+.row .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.empty { padding: 26px 16px; text-align: center; color: var(--muted); }
+
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.toolbar input[type=search], .toolbar select, .field input, .field select, .field textarea {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.toolbar input[type=search] { flex: 1 1 200px; }
+.check { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { padding: 9px 12px; border-top: 1px solid var(--line); text-align: left; white-space: nowrap; }
+thead th { border-top: 0; font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+td.n, th.n { text-align: right; font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+tbody tr.click { cursor: pointer; }
+tbody tr.click:hover { background: var(--sunk); }
+td.cell-low { color: var(--warn); font-weight: 600; } td.cell-out { color: var(--bad); font-weight: 600; } td.cell-na { color: var(--line); }
+tfoot td { font-weight: 600; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+.kpi .k { font-size: .75rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.kpi .v { font-family: var(--f-num); font-size: 1.4rem; margin-top: 2px; }
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+.split > * { min-width: 0; }
+.bar { height: 8px; border-radius: 4px; background: var(--sunk); overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--lc, var(--accent)); }
+
+.banner { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: var(--accent-soft); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 16px; }
+
+/* Sheet / modal */
+.overlay { position: fixed; inset: 0; z-index: 20; background: rgba(10,15,25,.45); display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--surface); width: min(560px, 100%); max-height: 92vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 18px max(18px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); display: grid; gap: 14px; box-shadow: var(--shadow); }
+.sheet.wide { width: min(760px, 100%); }
+@media (min-width: 700px) { .overlay { align-items: center; padding: 24px; } .sheet { border-radius: 16px; max-height: 88vh; } }
+.sheet-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.x { border: 0; background: var(--sunk); width: 32px; height: 32px; border-radius: 50%; font-size: 1.1rem; line-height: 1; flex: none; }
+.seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: var(--sunk); padding: 4px; border-radius: 10px; }
+.seg button { border: 0; background: none; padding: 8px 4px; border-radius: 7px; font-weight: 500; font-size: .88rem; }
+.seg button[aria-pressed="true"] { background: var(--surface); box-shadow: var(--shadow); }
+.form { display: grid; gap: 12px; }
+.field { display: grid; gap: 5px; }
+.field label, .field .lab { font-size: .82rem; font-weight: 600; color: var(--muted); }
+.field input, .field select, .field textarea { width: 100%; padding: 10px 11px; font-size: 1rem; }
+.field .unit-in { display: flex; align-items: stretch; }
+.field .unit-in input { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.field .unit-in span { display: flex; align-items: center; padding: 0 12px; border: 1px solid var(--line); border-left: 0; border-radius: 0 8px 8px 0; background: var(--sunk); color: var(--muted); white-space: nowrap; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.two > * { min-width: 0; }
+@media (max-width: 460px) { .two { grid-template-columns: 1fr; } }
+.hint { font-size: .85rem; color: var(--muted); background: var(--sunk); border-radius: 8px; padding: 8px 10px; }
+.hint.warn { color: var(--warn); background: var(--warn-soft); }
+.err { color: var(--bad); font-size: .88rem; }
+.sheet-f { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.loc-table td, .loc-table th { padding: 6px 8px; }
+.loc-table input[type=number] { width: 100px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.confirm { background: var(--bad-soft); border-radius: 8px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); z-index: 30; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: .9rem; max-width: calc(100% - 32px); }
+.state { padding: 60px 16px; text-align: center; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .sheet { animation: up .18s ease-out; } @keyframes up { from { transform: translateY(16px); opacity: .6; } } }
+</style>
+
+<style>body { margin: 0; } [hidden] { display: none !important; } img { max-width: 100%; }</style>
+<script>
+/* Saves the stock app's data as JSON files in a private GitHub repository.
+   state.json holds locations, items and settings; moves/YYYY-MM.json holds each month's history. */
+(() => {
+const CFG_KEY = "stock.github";
+const API = "https://api.github.com";
+const STATE = "state.json";
+const STATE_COLLECTIONS = ["locations", "items", "settings"];
+let cfg = null;
+try { cfg = JSON.parse(localStorage.getItem(CFG_KEY) || "null"); } catch (e) {}
+
+const files = new Map();   // path -> { sha, data, etag }
+const subs = new Set();
+let monthList = null;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const clone = (o) => (o === undefined ? undefined : JSON.parse(JSON.stringify(o)));
+const isObj = (v) => v && typeof v === "object" && !Array.isArray(v);
+const r3 = (n) => Math.round((+n || 0) * 1000) / 1000;
+const monthPath = (ms) => { const d = new Date(ms); return `moves/${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}.json`; };
+const recentMonths = () => { const n = new Date(); return [monthPath(n.getTime()), monthPath(new Date(n.getFullYear(), n.getMonth() - 1, 15).getTime())]; };
+
+function b64enc(str) { const b = new TextEncoder().encode(str); let s = ""; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
+function b64dec(b64) { const s = atob(b64.replace(/\s/g, "")); return new TextDecoder().decode(Uint8Array.from(s, (c) => c.charCodeAt(0))); }
+
+async function gh(method, path, body, headers = {}, c = cfg) {
+  return fetch(`${API}/repos/${c.repo}${path ? "/" + path : ""}`, {
+    method, cache: "no-store",
+    headers: { Authorization: `Bearer ${c.token}`, Accept: "application/vnd.github+json", ...(body ? { "Content-Type": "application/json" } : {}), ...headers },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+async function ghError(res) {
+  if (res.status === 401) return { code: "unavailable", message: "Your access key has expired or is wrong. Sign out in Settings and connect again." };
+  if (res.status === 403 || res.status === 404) return { code: "unavailable", message: "Your access key can't save to the stock repository. Check that it has Contents: Read and write." };
+  return { code: "unavailable", message: `GitHub said ${res.status}. Check your internet connection and try again.` };
+}
+
+async function readFile(path, fresh) {
+  const f = files.get(path);
+  const res = await gh("GET", `contents/${path}`, null, f && f.etag && !fresh ? { "If-None-Match": f.etag } : {});
+  if (res.status === 304) return f;
+  if (res.status === 404) { const nf = { sha: null, data: {}, etag: null }; files.set(path, nf); return nf; }
+  if (!res.ok) throw await ghError(res);
+  const j = await res.json();
+  let text = "";
+  if (j.encoding === "base64" && j.content) text = b64dec(j.content);
+  else if (j.size > 0) { const r2 = await gh("GET", `git/blobs/${j.sha}`); if (!r2.ok) throw await ghError(r2); text = b64dec((await r2.json()).content); }
+  const nf = { sha: j.sha, data: text ? JSON.parse(text) : {}, etag: res.headers.get("ETag") };
+  files.set(path, nf);
+  return nf;
+}
+
+let queue = Promise.resolve();
+function mutateFile(path, fn, message) {
+  const run = async () => {
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const f = await readFile(path, attempt > 0);
+      const data = clone(f.data);
+      fn(data);
+      const res = await gh("PUT", `contents/${path}`, { message, content: b64enc(JSON.stringify(data)), ...(f.sha ? { sha: f.sha } : {}) });
+      if (res.ok) {
+        const j = await res.json();
+        files.set(path, { sha: j.content.sha, data, etag: null });
+        if (path.startsWith("moves/") && monthList && !monthList.includes(path)) monthList.push(path);
+        emit();
+        return;
+      }
+      if (res.status === 409 || res.status === 422) { await sleep(300 + Math.random() * 900); continue; }
+      throw await ghError(res);
+    }
+    throw { code: "unavailable", message: "Someone else is saving at the same moment. Please try again." };
+  };
+  const p = queue.then(run, run);
+  queue = p.catch(() => {});
+  return p;
+}
+
+function applyPatch(target, patch) {
+  for (const [k, v] of Object.entries(patch)) {
+    if (isObj(v) && "__inc" in v) target[k] = r3((+target[k] || 0) + v.__inc);
+    else if (isObj(v)) { if (!isObj(target[k])) target[k] = {}; applyPatch(target[k], v); }
+    else target[k] = clone(v);
+  }
+}
+
+async function listMonths() {
+  if (monthList) return monthList;
+  const res = await gh("GET", "contents/moves");
+  monthList = res.ok ? (await res.json()).filter((e) => e.type === "file" && /\.json$/.test(e.name)).map((e) => e.path) : [];
+  return monthList;
+}
+function findMove(id) { for (const [p, f] of files) if (p.startsWith("moves/") && f.data[id]) return p; return null; }
+
+const snapDoc = (id, body) => ({ id, exists: body !== undefined, data: () => clone(body), metadata: { fromCache: false, hasPendingWrites: false } });
+function docsOf(coll) {
+  if (STATE_COLLECTIONS.includes(coll)) { const d = files.get(STATE)?.data?.[coll] || {}; return Object.entries(d).map(([id, b]) => snapDoc(id, b)); }
+  const out = []; for (const [p, f] of files) if (p.startsWith(coll + "/")) for (const [id, b] of Object.entries(f.data)) out.push(snapDoc(id, b));
+  return out;
+}
+const OPS = { "==": (a, b) => a === b, "!=": (a, b) => a !== b, "<": (a, b) => a < b, "<=": (a, b) => a <= b, ">": (a, b) => a > b, ">=": (a, b) => a >= b };
+
+function query(coll, filters = [], order = null, lim = 1000) {
+  const run = () => {
+    let docs = docsOf(coll).filter((d) => filters.every(([f, op, v]) => (OPS[op] || (() => true))(d.data()[f], v)));
+    if (order) docs.sort((a, b) => { const x = a.data()[order[0]], y = b.data()[order[0]]; return (x > y ? 1 : x < y ? -1 : 0) * (order[1] === "desc" ? -1 : 1); });
+    else docs.sort((a, b) => (a.id > b.id ? 1 : -1));
+    docs = docs.slice(0, lim);
+    return { docs, size: docs.length, empty: !docs.length, docChanges: () => [], metadata: { fromCache: false, hasPendingWrites: false } };
+  };
+  const ensure = async () => {
+    if (coll !== "moves") return;
+    let lo = -Infinity, hi = Infinity;
+    for (const [f, op, v] of filters) if (f === "at") { if (op === ">=" || op === ">") lo = v; if (op === "<" || op === "<=") hi = v; }
+    const months = await listMonths();
+    for (const p of months) {
+      if (files.has(p)) continue;
+      const m = p.match(/(\d{4})-(\d{2})/); const start = new Date(+m[1], +m[2] - 1, 1).getTime(), end = new Date(+m[1], +m[2], 1).getTime();
+      if (end > lo && start < hi) await readFile(p);
+    }
+  };
+  return {
+    path: coll,
+    where: (f, op, v) => query(coll, [...filters, [f, op, v]], order, lim),
+    orderBy: (f, dir = "asc") => query(coll, filters, [f, dir], lim),
+    limit: (n) => query(coll, filters, order, n),
+    get: async () => { await ensure(); return run(); },
+    onSnapshot: (next, err) => { const s = () => next(run()); subs.add(s); setTimeout(s, 0); return () => subs.delete(s); },
+    doc: (id) => docRef(coll + "/" + (id || newId())),
+    add: async (data) => { const r = docRef(coll + "/" + newId()); await r.set(data); return r; },
+  };
+}
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+function docRef(path) {
+  const [coll, id] = path.split("/");
+  const isState = STATE_COLLECTIONS.includes(coll);
+  const current = () => (isState ? files.get(STATE)?.data?.[coll]?.[id] : (() => { const p = findMove(id); return p ? files.get(p).data[id] : undefined; })());
+  return {
+    id, path,
+    get: async () => snapDoc(id, current()),
+    onSnapshot: (next) => { const s = () => next(snapDoc(id, current())); subs.add(s); setTimeout(s, 0); return () => subs.delete(s); },
+    collection: (sub) => query(path + "/" + sub),
+    set: (data) => isState
+      ? mutateFile(STATE, (d) => { (d[coll] ||= {})[id] = clone(data); }, `Save ${coll} ${id}`)
+      : mutateFile(monthPath(data.at || Date.now()), (d) => { d[id] = clone(data); }, `Record ${data.type || ""} ${data.itemName || ""}`.trim()),
+    update: (patch) => {
+      if (isState) return mutateFile(STATE, (d) => { const t = d[coll]?.[id]; if (!t) throw { code: "invalid_argument", message: "This record no longer exists." }; applyPatch(t, patch); }, `Update ${coll} ${(patch.name || id)}`);
+      const p = findMove(id); if (!p) return Promise.reject({ code: "invalid_argument", message: "This record no longer exists." });
+      return mutateFile(p, (d) => { if (d[id]) applyPatch(d[id], patch); }, `Update history entry`);
+    },
+    delete: () => {
+      if (isState) return mutateFile(STATE, (d) => { if (d[coll]) delete d[coll][id]; }, `Delete ${coll} ${id}`);
+      const p = findMove(id); if (!p) return Promise.resolve();
+      return mutateFile(p, (d) => { delete d[id]; }, `Undo history entry`);
+    },
+  };
+}
+
+function emit() { for (const s of subs) { try { s(); } catch (e) { console.error(e); } } }
+
+async function poll() {
+  if (!cfg || document.hidden) return;
+  try {
+    const before = [...files].map(([p, f]) => p + f.sha).join();
+    await readFile(STATE);
+    for (const p of recentMonths()) if (files.has(p) || (monthList && monthList.includes(p)) || p === recentMonths()[0]) await readFile(p);
+    const after = [...files].map(([p, f]) => p + f.sha).join();
+    if (before !== after) emit();
+  } catch (e) { /* offline or rate limited: try again on the next tick */ }
+}
+
+const db = {
+  doc: docRef,
+  collection: (c) => query(c),
+  increment: (n) => ({ __inc: n }),
+};
+const user = { id: async () => cfg?.name || "Staff", can: async () => true, isOwner: () => true, canEdit: () => true,
+  profiles: async (ids) => Object.fromEntries([].concat(ids).map((i) => [i, { id: i, name: i }])), me: async () => ({ id: cfg?.name, name: cfg?.name }) };
+const downloads = { save: async ({ filename, data }) => {
+  const blob = data instanceof Blob ? data : new Blob([data], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); return { status: "saved" };
+} };
+
+let resolveReady; const ready = new Promise((r) => (resolveReady = r));
+async function start() {
+  await readFile(STATE);
+  await listMonths();
+  for (const p of recentMonths()) if (monthList.includes(p)) await readFile(p);
+  window.__stockSignOut = () => { try { localStorage.removeItem(CFG_KEY); } catch (e) {} location.reload(); };
+  window.__stockEmail = `${cfg.name} · ${cfg.repo}`;
+  setInterval(poll, 20000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+  resolveReady();
+}
+
+async function connect(repo, token, name) {
+  repo = repo.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/\/$/, "");
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error("Write the repository as owner/name, for example jaru/stock-data.");
+  const c = { repo, token: token.trim(), name: name.trim() || "Staff" };
+  const res = await gh("GET", "", null, {}, c);
+  if (res.status === 401) throw new Error("GitHub did not accept this access key. Copy it again and paste the whole key.");
+  if (res.status === 404 || res.status === 403) throw new Error("This key can't see that repository. Check the name, and that the key was given access to it.");
+  if (!res.ok) throw new Error(`GitHub said ${res.status}. Check your internet connection and try again.`);
+  const info = await res.json();
+  if (info.permissions && !info.permissions.push) throw new Error("This key can only read. Give it Contents: Read and write.");
+  if (!info.private) throw new Error("This repository is public, so anyone could see your stock. Make it private in its GitHub settings first.");
+  cfg = c;
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
+  const s = await readFile(STATE);
+  if (!s.sha) await mutateFile(STATE, (d) => { d.locations ||= {}; d.items ||= {}; d.settings ||= { main: { name: "", currency: "$" } }; }, "Set up stock data");
+}
+
+function showConnect() {
+  const el = document.getElementById("connect"); el.hidden = false;
+  document.getElementById("connectForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const btn = document.getElementById("cnGo"), err = document.getElementById("cnErr"); err.textContent = ""; btn.disabled = true; btn.textContent = "Connecting…";
+    try { await connect(document.getElementById("cnRepo").value, document.getElementById("cnToken").value, document.getElementById("cnName").value); el.hidden = true; await start(); }
+    catch (e) { err.textContent = e.message || "Could not connect."; btn.disabled = false; btn.textContent = "Connect"; }
+  });
+}
+
+window.claude = { use: async (name) => {
+  if (name === "downloads") return downloads;
+  await ready;
+  return name === "db" ? db : name === "user" ? user : null;
+} };
+document.addEventListener("DOMContentLoaded", () => {
+  if (cfg) start().catch((e) => { document.getElementById("main").innerHTML = `<div class="state"><h2>Can't reach your stock data</h2><p>${(e && e.message) || "Check your internet connection."}</p><button class="btn primary" onclick="location.reload()">Try again</button> <button class="btn" onclick="localStorage.removeItem('${CFG_KEY}');location.reload()">Connect again</button></div>`; });
+  else showConnect();
+});
+})();
+
+</script>
+</head>
+<body>
+<div id="connect" class="overlay" hidden style="align-items:center;padding:16px;background:var(--bg)">
+  <form class="sheet form" id="connectForm" style="border-radius:16px;border:1px solid var(--line)">
+    <div><h2>Connect to your stock</h2><div class="small muted">Do this once on each phone or computer. Ask the owner for the repository name and access key.</div></div>
+    <div class="field"><label for="cnRepo">Stock repository</label><input id="cnRepo" required placeholder="owner/stock-data" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="field"><label for="cnToken">Access key</label><input id="cnToken" type="password" required placeholder="github_pat_…" autocomplete="off"></div>
+    <div class="field"><label for="cnName">Your name</label><input id="cnName" placeholder="Shown in the history, e.g. Mai (Branch 1)" autocomplete="name"></div>
+    <div id="cnErr" class="err"></div>
+    <button class="btn primary" id="cnGo" style="padding:11px">Connect</button>
+    <div class="small muted">The key is saved only on this device. Use Sign out in Settings to remove it.</div>
+  </form>
+</div>
+
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand"><h1 id="brand">Stock</h1><span class="tag">Inventory</span></div>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Location"></div>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+  </div>
+</header>
+<main class="wrap" id="main"><div class="state">Loading your stock…</div></main>
+<button class="btn primary fab" id="fab" hidden data-act="record">+ Record stock</button>
+<div id="modal"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(() => {
+const DEFAULT_SETTINGS = { currency: "$", name: "" };
+const S = {
+  db: null, user: null, uid: null, dl: null, canWrite: true, status: "loading",
+  locs: [], items: [], moves: [], settings: { ...DEFAULT_SETTINGS }, got: {},
+  loc: "all", tab: "overview", q: "", cat: "", lowOnly: false,
+  hType: "", hQ: "", names: {},
+  rep: { preset: "month", from: "", to: "", data: null, loading: false },
+};
+try { const v = localStorage.getItem("stock.loc"); if (v) S.loc = v; const t = localStorage.getItem("stock.tab"); if (t) S.tab = t; } catch (e) {}
+
+const TABS = [["overview", "Overview"], ["stock", "Stock"], ["history", "History"], ["reorder", "Reorder"], ["reports", "Reports"], ["settings", "Settings"]];
+const TYPES = {
+  in: { label: "Receive", verb: "Received", help: "Stock arriving from a supplier, or bread and pastry made in the bakery." },
+  use: { label: "Use", verb: "Used", help: "Stock used in the kitchen or sold." },
+  waste: { label: "Waste", verb: "Wasted", help: "Spoiled, expired, dropped or burnt." },
+  transfer: { label: "Move", verb: "Moved", help: "Move stock between locations, for example from the shared store to a branch." },
+  count: { label: "Count", verb: "Counted", help: "Enter the real quantity on the shelf after counting. The difference is recorded." },
+};
+const KINDS = { bakery: "Bakery", restaurant: "Restaurant", shared: "Shared store", other: "Other" };
+const UNITS = ["kg", "g", "L", "ml", "pcs", "dozen", "pack", "box", "bag", "bottle", "can", "tray", "loaf", "portion"];
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const r3 = (n) => Math.round((+n || 0) * 1000) / 1000;
+const num = (n) => r3(n).toLocaleString(undefined, { maximumFractionDigits: 3 });
+const money = (n) => esc(S.settings.currency || "") + (Math.round((+n || 0) * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const locById = (id) => S.locs.find((l) => l.id === id);
+const locName = (id) => locById(id)?.name || "Removed location";
+const locColor = (id) => { const i = S.locs.findIndex((l) => l.id === id); return `var(--c${(i < 0 ? 0 : i) % 6})`; };
+const lname = (id) => `<span class="lname" style="--lc:${locColor(id)}">${esc(locName(id))}</span>`;
+const qtyAt = (it, l) => +(it.stock?.[l] ?? 0);
+const minAt = (it, l) => +(it.min?.[l] ?? 0);
+const stockedAt = (it, l) => (it.locs || []).includes(l);
+const statusOf = (it, l) => { const q = qtyAt(it, l), m = minAt(it, l); if (q <= 0) return "out"; if (m > 0 && q <= m) return "low"; return "ok"; };
+const STATUS_LABEL = { ok: "OK", low: "Low", out: "Out" };
+const itemById = (id) => S.items.find((i) => i.id === id);
+const visibleLocs = () => (S.loc === "all" ? S.locs.map((l) => l.id) : [S.loc]);
+const sharedLocs = () => S.locs.filter((l) => l.kind === "shared").map((l) => l.id);
+const restaurantLocs = () => S.locs.filter((l) => l.kind === "restaurant");
+const fmtTime = (ms) => { const d = new Date(ms); const today = new Date(); const same = d.toDateString() === today.toDateString();
+  return same ? "Today " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : d.toLocaleDateString([], { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); };
+const sortItems = (a, b) => (a.category || "").localeCompare(b.category || "") || a.name.localeCompare(b.name);
+const lowList = (locIds) => { const out = []; for (const it of S.items) for (const l of locIds) if (stockedAt(it, l) && statusOf(it, l) !== "ok") out.push({ it, l, s: statusOf(it, l) }); return out.sort((a, b) => (a.s === "out" ? 0 : 1) - (b.s === "out" ? 0 : 1) || a.it.name.localeCompare(b.it.name)); };
+
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), 2600); }
+
+/* ---------- Rendering ---------- */
+function render() {
+  const a = document.activeElement; const keep = a && a.id ? { id: a.id, s: a.selectionStart, e: a.selectionEnd } : null;
+  $("#brand").textContent = S.settings.name || "Stock";
+  if (S.loc !== "all" && S.locs.length && !locById(S.loc)) S.loc = "all";
+  $("#chips").innerHTML = [`<button class="chip" data-act="loc" data-id="all" aria-pressed="${S.loc === "all"}">All locations</button>`]
+    .concat(S.locs.map((l) => `<button class="chip" data-act="loc" data-id="${esc(l.id)}" aria-pressed="${S.loc === l.id}"><span class="dot" style="background:${locColor(l.id)}"></span>${esc(l.name)}</button>`)).join("");
+  const lowN = lowList(visibleLocs()).length;
+  $("#tabs").innerHTML = TABS.map(([k, v]) => `<button class="tab" role="tab" data-act="tab" data-id="${k}" aria-selected="${S.tab === k}">${v}${k === "reorder" && lowN ? `<span class="count">${lowN}</span>` : ""}</button>`).join("");
+  $("#fab").hidden = !(S.status === "ready" && S.canWrite && S.items.length);
+  const m = $("#main");
+  if (S.status === "nodb") m.innerHTML = `<div class="state"><h2>Sign in to see your stock</h2><p>Open this page from claude.ai while signed in. Stock is saved there and shared with your team.</p></div>`;
+  else if (S.status === "loading" || !S.got.locs || !S.got.items) m.innerHTML = `<div class="state">Loading your stock…</div>`;
+  else m.innerHTML = ({ overview: vOverview, stock: vStock, history: vHistory, reorder: vReorder, reports: vReports, settings: vSettings }[S.tab] || vOverview)();
+  if (keep) { const el = document.getElementById(keep.id); if (el && el !== document.activeElement) { el.focus(); try { el.setSelectionRange(keep.s, keep.e); } catch (e) {} } }
+}
+
+function exampleBanner() {
+  if (!S.items.some((i) => i.example) || !S.canWrite) return "";
+  return `<div class="banner"><div><b>These are example items.</b> <span class="muted">Try recording some stock, then remove them and add your own.</span></div><button class="btn" data-act="clear-examples">Remove examples</button></div>`;
+}
+
+function vOverview() {
+  if (!S.locs.length) return `<div class="state"><h2>Set up your locations</h2><p>Start with your bakery, your two restaurant branches and a shared store. You can rename them later in Settings.</p>${S.canWrite ? `<button class="btn primary" data-act="default-locs">Create my locations</button>` : ""}</div>`;
+  const cards = S.locs.map((l) => {
+    let val = 0, n = 0, low = 0, out = 0;
+    for (const it of S.items) if (stockedAt(it, l.id)) { n++; val += Math.max(0, qtyAt(it, l.id)) * (+it.cost || 0); const s = statusOf(it, l.id); if (s === "low") low++; if (s === "out") out++; }
+    return `<button class="loc-card" style="--lc:${locColor(l.id)}" data-act="open-loc" data-id="${esc(l.id)}">
+      <span class="kind">${esc(KINDS[l.kind] || "Location")}${l.kind === "shared" ? " · used by both branches" : ""}</span>
+      <span class="name">${esc(l.name)}</span>
+      <span class="val">${money(val)}</span>
+      <span class="meta"><span>${n} items</span>${low ? `<span style="color:var(--warn)">${low} low</span>` : ""}${out ? `<span style="color:var(--bad)">${out} out</span>` : ""}${!low && !out && n ? `<span style="color:var(--ok)">All stocked</span>` : ""}</span>
+    </button>`;
+  }).join("");
+  const low = lowList(visibleLocs()).slice(0, 8);
+  const recent = filteredMoves().slice(0, 8);
+  return `${exampleBanner()}
+  <section class="loc-grid">${cards}</section>
+  ${!S.items.length ? `<div class="panel"><div class="state"><h2>No items yet</h2><p>Add the things you keep in stock: flour, butter, chicken, oil, takeaway boxes.</p>${S.canWrite ? `<button class="btn primary" data-act="new-item">Add your first item</button>` : ""}</div></div>` : ""}
+  <div class="split">
+    <section class="panel"><div class="panel-h"><h2>Needs restocking</h2><button class="btn sm" data-act="tab" data-id="reorder">Reorder list</button></div>
+      <div class="rows">${low.length ? low.map(({ it, l, s }) => `<div class="row click" data-act="item" data-id="${esc(it.id)}"><div class="main"><div class="title">${esc(it.name)}</div><div class="sub">${lname(l)}</div></div><div class="qty"><b>${num(qtyAt(it, l))}</b> <span class="muted">${esc(it.unit)}</span><div class="small muted">min ${num(minAt(it, l))}</div></div><span class="pill ${s}">${STATUS_LABEL[s]}</span></div>`).join("") : `<div class="empty">Nothing is low. Good work.</div>`}</div></section>
+    <section class="panel"><div class="panel-h"><h2>Recent activity</h2><button class="btn sm" data-act="tab" data-id="history">All history</button></div>
+      <div class="rows">${recent.length ? recent.map(moveRow).join("") : `<div class="empty">No stock recorded yet. Use <b>Record stock</b> when deliveries arrive or stock is used.</div>`}</div></section>
+  </div>`;
+}
+
+function filteredItems() {
+  const q = S.q.trim().toLowerCase(); const locs = visibleLocs();
+  return S.items.filter((it) => (S.loc === "all" || stockedAt(it, S.loc))
+    && (!q || (it.name + " " + (it.category || "") + " " + (it.supplier || "")).toLowerCase().includes(q))
+    && (!S.cat || it.category === S.cat)
+    && (!S.lowOnly || locs.some((l) => stockedAt(it, l) && statusOf(it, l) !== "ok"))).sort(sortItems);
+}
+const categories = () => [...new Set(S.items.map((i) => i.category).filter(Boolean))].sort();
+
+function vStock() {
+  const items = filteredItems();
+  const tools = `<div class="toolbar">
+    <input type="search" id="q" placeholder="Search items, categories, suppliers" value="${esc(S.q)}" aria-label="Search">
+    <select id="cat" aria-label="Category"><option value="">All categories</option>${categories().map((c) => `<option ${c === S.cat ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
+    <label class="check"><input type="checkbox" id="lowOnly" ${S.lowOnly ? "checked" : ""}> Low or out only</label>
+  </div>`;
+  const head = `<div class="panel-h"><h2>${S.loc === "all" ? "Stock at all locations" : "Stock at " + esc(locName(S.loc))}</h2><div class="toolbar">
+    ${S.canWrite && S.loc !== "all" ? `<button class="btn" data-act="count-sheet">Stock count</button>` : ""}
+    <button class="btn" data-act="export-stock">Download CSV</button>
+    ${S.canWrite ? `<button class="btn primary" data-act="new-item">+ New item</button>` : ""}</div></div>`;
+  let body;
+  if (!items.length) body = `<div class="empty">${S.items.length ? "No items match." : "No items yet. Add your first item."}</div>`;
+  else if (S.loc === "all") {
+    const total = { v: 0 };
+    body = `<div class="table-wrap"><table><thead><tr><th>Item</th>${S.locs.map((l) => `<th class="n"><span class="lname" style="--lc:${locColor(l.id)}">${esc(l.name)}</span></th>`).join("")}<th class="n">Total</th><th class="n">Value</th></tr></thead><tbody>
+    ${items.map((it) => { let t = 0; const cells = S.locs.map((l) => { if (!stockedAt(it, l.id)) return `<td class="n cell-na">–</td>`; const q = qtyAt(it, l.id); t += q; const s = statusOf(it, l.id); return `<td class="n ${s !== "ok" ? "cell-" + s : ""}" title="${STATUS_LABEL[s]}">${num(q)}</td>`; }).join("");
+      const v = Math.max(0, t) * (+it.cost || 0); total.v += v;
+      return `<tr class="click" data-act="item" data-id="${esc(it.id)}"><td><b>${esc(it.name)}</b> <span class="muted small">${esc(it.unit)}</span><div class="small muted">${esc(it.category || "")}</div></td>${cells}<td class="n">${num(t)}</td><td class="n">${money(v)}</td></tr>`; }).join("")}
+    </tbody><tfoot><tr><td colspan="${S.locs.length + 2}">Total stock value</td><td class="n">${money(total.v)}</td></tr></tfoot></table></div>`;
+  } else {
+    const l = S.loc; const isShared = locById(l)?.kind === "shared";
+    body = `<div class="rows">${items.map((it) => { const s = statusOf(it, l); return `<div class="row click" data-act="item" data-id="${esc(it.id)}">
+      <div class="main"><div class="title">${esc(it.name)}</div><div class="sub">${esc([it.category, it.supplier].filter(Boolean).join(" · ")) || "&nbsp;"}</div></div>
+      <div class="qty"><b>${num(qtyAt(it, l))}</b> <span class="muted">${esc(it.unit)}</span><div class="small muted">min ${num(minAt(it, l))}</div></div>
+      <span class="pill ${s}">${STATUS_LABEL[s]}</span>
+      ${S.canWrite ? `<div class="acts"><button class="btn sm" data-act="record" data-type="use" data-item="${esc(it.id)}" data-loc="${esc(l)}">Use</button><button class="btn sm" data-act="record" data-type="in" data-item="${esc(it.id)}" data-loc="${esc(l)}">Receive</button>${isShared ? `<button class="btn sm" data-act="record" data-type="transfer" data-item="${esc(it.id)}" data-loc="${esc(l)}">Send to branch</button>` : ""}</div>` : ""}
+    </div>`; }).join("")}</div>`;
+  }
+  return `${exampleBanner()}<section class="panel">${head}<div class="panel-b">${tools}</div>${body}</section>`;
+}
+
+function filteredMoves() {
+  const q = S.hQ.trim().toLowerCase();
+  return S.moves.filter((m) => (S.loc === "all" || m.loc === S.loc || m.toLoc === S.loc || m.forLoc === S.loc)
+    && (!S.hType || m.type === S.hType) && (!q || (m.itemName || "").toLowerCase().includes(q) || (m.note || "").toLowerCase().includes(q)));
+}
+function moveRow(m) {
+  const t = TYPES[m.type] || { verb: m.type };
+  const sign = m.type === "in" ? "+" : m.type === "use" || m.type === "waste" ? "−" : "";
+  let where = lname(m.loc);
+  if (m.type === "transfer") where = `${lname(m.loc)} → ${lname(m.toLoc)}`;
+  if (m.forLoc) where += ` <span class="muted">for</span> ${lname(m.forLoc)}`;
+  const qtyTxt = m.type === "count" ? `${num(m.qty)} <span class="muted">${esc(m.unit)}</span><div class="small muted">${(m.delta?.[m.loc] ?? 0) >= 0 ? "+" : "−"}${num(Math.abs(m.delta?.[m.loc] ?? 0))}</div>` : `${sign}${num(m.qty)} <span class="muted">${esc(m.unit)}</span>`;
+  const by = m.by && S.names[m.by] ? ` · ${esc(S.names[m.by])}` : "";
+  return `<div class="row"><span class="pill t-${esc(m.type)}">${esc(t.verb)}</span><div class="main"><div class="title">${esc(m.itemName)}</div><div class="sub">${where} · ${fmtTime(m.at)}${by}${m.note ? " · " + esc(m.note) : ""}</div></div><div class="qty"><b class="num" style="font-size:1rem">${qtyTxt}</b></div>${S.canWrite && S.tab === "history" && !m._noUndo ? `<button class="btn sm" data-act="undo" data-id="${esc(m.id)}" title="Reverse this entry">Undo</button>` : ""}</div>`;
+}
+function vHistory() {
+  const list = filteredMoves();
+  return `<section class="panel"><div class="panel-h"><h2>History</h2><span class="small muted">Latest ${S.moves.length} entries${S.loc !== "all" ? " at " + esc(locName(S.loc)) : ""}</span></div>
+  <div class="panel-b"><div class="toolbar"><input type="search" id="hQ" placeholder="Search item or note" value="${esc(S.hQ)}" aria-label="Search history">
+  <select id="hType" aria-label="Type"><option value="">All types</option>${Object.entries(TYPES).map(([k, v]) => `<option value="${k}" ${S.hType === k ? "selected" : ""}>${v.verb}</option>`).join("")}</select></div></div>
+  <div class="rows">${list.length ? list.map(moveRow).join("") : `<div class="empty">Nothing recorded yet.</div>`}</div>
+  <div class="panel-b small muted">Undo reverses an entry's effect on stock and removes it from history.</div></section>`;
+}
+
+function reorderGroups() {
+  const groups = {};
+  for (const { it, l } of lowList(visibleLocs())) {
+    const have = qtyAt(it, l), min = minAt(it, l);
+    const target = min > 0 ? min * 2 : 1;
+    const need = Math.max(0, Math.ceil((target - have) * 100) / 100);
+    const key = it.supplier || "No supplier set";
+    (groups[key] ||= []).push({ it, l, have, min, need });
+  }
+  return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+}
+function vReorder() {
+  const g = reorderGroups();
+  const shared = sharedLocs();
+  return `<section class="panel"><div class="panel-h"><div><h2>Reorder list</h2><div class="small muted">Items at or below their minimum. Suggested order brings stock up to twice the minimum.</div></div>
+  ${g.length ? `<div class="toolbar"><button class="btn" data-act="copy-reorder">Copy as text</button><button class="btn" data-act="export-reorder">Download CSV</button></div>` : ""}</div>
+  ${g.length ? g.map(([sup, rows]) => `<div class="panel-b"><h3 style="margin:6px 0">${esc(sup)}</h3></div><div class="table-wrap"><table><thead><tr><th>Item</th><th>Location</th><th class="n">Have</th><th class="n">Min</th><th class="n">Order</th><th></th></tr></thead><tbody>
+    ${rows.map((r) => `<tr><td><b>${esc(r.it.name)}</b></td><td>${lname(r.l)}</td><td class="n">${num(r.have)}</td><td class="n">${num(r.min)}</td><td class="n"><b>${num(r.need)}</b> ${esc(r.it.unit)}</td><td>${S.canWrite ? (shared.length && !shared.includes(r.l) && locById(r.l)?.kind === "restaurant" && shared.some((s) => stockedAt(r.it, s) && qtyAt(r.it, s) > 0) ? `<button class="btn sm" data-act="record" data-type="transfer" data-item="${esc(r.it.id)}" data-loc="${esc(shared.find((s) => qtyAt(r.it, s) > 0))}" data-to="${esc(r.l)}">Take from shared</button>` : `<button class="btn sm" data-act="record" data-type="in" data-item="${esc(r.it.id)}" data-loc="${esc(r.l)}">Receive</button>`) : ""}</td></tr>`).join("")}
+  </tbody></table></div>`).join("") : `<div class="empty">Nothing to reorder${S.loc !== "all" ? " at " + esc(locName(S.loc)) : ""}. Set a minimum on items to get alerts here.</div>`}
+  </section>`;
+}
+
+/* ---------- Reports ---------- */
+function rangeFor(p) {
+  const now = new Date(); const sod = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (p === "today") return [sod(now), new Date(sod(now).getTime() + 864e5)];
+  if (p === "week") { const s = sod(now); const dow = (s.getDay() + 6) % 7; s.setDate(s.getDate() - dow); return [s, new Date(s.getTime() + 7 * 864e5)]; }
+  if (p === "lastmonth") return [new Date(now.getFullYear(), now.getMonth() - 1, 1), new Date(now.getFullYear(), now.getMonth(), 1)];
+  if (p === "custom" && S.rep.from && S.rep.to) { const f = new Date(S.rep.from + "T00:00"); const t = new Date(S.rep.to + "T00:00"); t.setDate(t.getDate() + 1); return [f, t]; }
+  return [new Date(now.getFullYear(), now.getMonth(), 1), new Date(now.getFullYear(), now.getMonth() + 1, 1)];
+}
+const isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+async function loadReport() {
+  if (!S.db) return;
+  const [f, t] = rangeFor(S.rep.preset);
+  S.rep.loading = true; render();
+  const seen = new Map(); let cursor = f.getTime();
+  try {
+    for (let guard = 0; guard < 30; guard++) {
+      const snap = await S.db.collection("moves").where("at", ">=", cursor).where("at", "<", t.getTime()).orderBy("at", "asc").limit(1000).get();
+      let added = 0; for (const d of snap.docs) if (!seen.has(d.id)) { seen.set(d.id, { id: d.id, ...d.data() }); added++; }
+      if (snap.size < 1000 || !added) break;
+      cursor = snap.docs[snap.docs.length - 1].data().at;
+    }
+    S.rep.data = { from: f, to: t, moves: [...seen.values()] };
+  } catch (e) { toast("Could not load the report. Try again."); }
+  S.rep.loading = false; render();
+}
+function computeReport() {
+  const d = S.rep.data; if (!d) return null;
+  const loc = S.loc; const rows = new Map();
+  const shared = { byBranch: {}, items: new Map() };
+  const tot = { inV: 0, useV: 0, wasteV: 0 };
+  const row = (m) => { if (!rows.has(m.itemId)) rows.set(m.itemId, { name: m.itemName, unit: m.unit, inQ: 0, useQ: 0, wasteQ: 0, tIn: 0, tOut: 0, adj: 0, useV: 0, wasteV: 0, inV: 0 }); return rows.get(m.itemId); };
+  for (const m of d.moves) {
+    const cost = +(m.cost ?? itemById(m.itemId)?.cost ?? 0); const q = +m.qty || 0;
+    const fromShared = locById(m.loc)?.kind === "shared";
+    if (fromShared) {
+      let br = null; if ((m.type === "use" || m.type === "waste") && m.forLoc) br = m.forLoc; if (m.type === "transfer" && locById(m.toLoc)?.kind === "restaurant") br = m.toLoc;
+      if (br) { shared.byBranch[br] = (shared.byBranch[br] || 0) + q * cost;
+        const k = m.itemId + "|" + br; const s = shared.items.get(k) || { name: m.itemName, unit: m.unit, br, q: 0, v: 0 }; s.q += q; s.v += q * cost; shared.items.set(k, s); }
+    }
+    const touchesFrom = loc === "all" || m.loc === loc, touchesTo = loc === "all" ? false : m.toLoc === loc;
+    if (!touchesFrom && !touchesTo) continue;
+    const r = row(m);
+    if (m.type === "in" && touchesFrom) { r.inQ += q; r.inV += q * cost; tot.inV += q * cost; }
+    else if (m.type === "use" && touchesFrom) { r.useQ += q; r.useV += q * cost; tot.useV += q * cost; }
+    else if (m.type === "waste" && touchesFrom) { r.wasteQ += q; r.wasteV += q * cost; tot.wasteV += q * cost; }
+    else if (m.type === "transfer") { if (loc === "all") { r.tOut += q; } else { if (m.loc === loc) r.tOut += q; if (m.toLoc === loc) r.tIn += q; } }
+    else if (m.type === "count" && touchesFrom) { r.adj += +(m.delta?.[m.loc] || 0); }
+  }
+  return { rows: [...rows.values()].sort((a, b) => b.useV + b.wasteV - (a.useV + a.wasteV) || a.name.localeCompare(b.name)), tot, shared };
+}
+function vReports() {
+  if (!S.rep.data && !S.rep.loading) setTimeout(loadReport, 0);
+  const R = computeReport(); const [f, t] = rangeFor(S.rep.preset);
+  const presets = [["today", "Today"], ["week", "This week"], ["month", "This month"], ["lastmonth", "Last month"], ["custom", "Custom"]];
+  const tl = new Date(t.getTime() - 864e5);
+  const head = `<section class="panel"><div class="panel-h"><div><h2>Report${S.loc !== "all" ? " · " + esc(locName(S.loc)) : ""}</h2><div class="small muted">${f.toLocaleDateString([], { day: "numeric", month: "short", year: "numeric" })} to ${tl.toLocaleDateString([], { day: "numeric", month: "short", year: "numeric" })}</div></div>
+    <div class="toolbar"><select id="repPreset" aria-label="Period">${presets.map(([k, v]) => `<option value="${k}" ${S.rep.preset === k ? "selected" : ""}>${v}</option>`).join("")}</select>
+    ${S.rep.preset === "custom" ? `<input type="date" id="repFrom" value="${esc(S.rep.from || isoDay(f))}" aria-label="From" class="btn"><input type="date" id="repTo" value="${esc(S.rep.to || isoDay(tl))}" aria-label="To" class="btn">` : ""}
+    <button class="btn" data-act="export-report" ${R && R.rows.length ? "" : "disabled"}>Download CSV</button></div></div></section>`;
+  if (S.rep.loading || !R) return head + `<div class="state">Working out the numbers…</div>`;
+  const wastePct = R.tot.useV + R.tot.wasteV > 0 ? (R.tot.wasteV / (R.tot.useV + R.tot.wasteV)) * 100 : 0;
+  const kpis = `<section class="kpis"><div class="kpi"><div class="k">Received</div><div class="v">${money(R.tot.inV)}</div></div><div class="kpi"><div class="k">Used</div><div class="v">${money(R.tot.useV)}</div></div><div class="kpi"><div class="k">Wasted</div><div class="v" style="color:var(--bad)">${money(R.tot.wasteV)}</div></div><div class="kpi"><div class="k">Waste share</div><div class="v">${wastePct.toFixed(1)}%</div></div></section>`;
+  const sharedIds = sharedLocs(); let sharedHtml = "";
+  if (sharedIds.length && (S.loc === "all" || sharedIds.includes(S.loc) || locById(S.loc)?.kind === "restaurant")) {
+    const brs = restaurantLocs(); const maxV = Math.max(1, ...brs.map((b) => R.shared.byBranch[b.id] || 0)); const total = brs.reduce((s, b) => s + (R.shared.byBranch[b.id] || 0), 0);
+    const items = [...R.shared.items.values()].filter((s) => S.loc === "all" || sharedIds.includes(S.loc) || s.br === S.loc).sort((a, b) => b.v - a.v).slice(0, 12);
+    sharedHtml = `<section class="panel"><div class="panel-h"><div><h2>Shared stock taken by each branch</h2><div class="small muted">Stock sent from the shared store, or used from it on behalf of a branch.</div></div><span class="num">${money(total)}</span></div>
+    <div class="panel-b" style="display:grid;gap:10px">${brs.map((b) => { const v = R.shared.byBranch[b.id] || 0; return `<div style="display:grid;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px">${lname(b.id)}<span class="num">${money(v)}${total ? ` <span class="muted small">${Math.round((v / total) * 100)}%</span>` : ""}</span></div><div class="bar" style="--lc:${locColor(b.id)}"><span style="width:${(v / maxV) * 100}%"></span></div></div>`; }).join("")}</div>
+    ${items.length ? `<div class="table-wrap"><table><thead><tr><th>Item</th><th>Branch</th><th class="n">Qty</th><th class="n">Value</th></tr></thead><tbody>${items.map((s) => `<tr><td>${esc(s.name)}</td><td>${lname(s.br)}</td><td class="n">${num(s.q)} ${esc(s.unit)}</td><td class="n">${money(s.v)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No shared stock went to the branches in this period.</div>`}</section>`;
+  }
+  const table = `<section class="panel"><div class="panel-h"><h2>By item</h2></div>${R.rows.length ? `<div class="table-wrap"><table><thead><tr><th>Item</th><th class="n">Received</th><th class="n">Used</th><th class="n">Wasted</th><th class="n">${S.loc === "all" ? "Moved" : "Moved in / out"}</th><th class="n">Count diff.</th><th class="n">Cost used + wasted</th></tr></thead><tbody>
+    ${R.rows.map((r) => `<tr><td><b>${esc(r.name)}</b> <span class="muted small">${esc(r.unit)}</span></td><td class="n">${num(r.inQ)}</td><td class="n">${num(r.useQ)}</td><td class="n">${num(r.wasteQ)}</td><td class="n">${S.loc === "all" ? num(r.tOut) : num(r.tIn) + " / " + num(r.tOut)}</td><td class="n">${r.adj > 0 ? "+" : ""}${num(r.adj)}</td><td class="n">${money(r.useV + r.wasteV)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nothing recorded in this period.</div>`}</section>`;
+  return head + kpis + sharedHtml + table;
+}
+
+/* ---------- Settings ---------- */
+function vSettings() {
+  const ro = S.canWrite ? "" : "disabled";
+  return `<section class="panel"><div class="panel-h"><h2>Business</h2></div><div class="panel-b form">
+    <div class="two"><div class="field"><label for="setName">Business name</label><input id="setName" value="${esc(S.settings.name)}" placeholder="e.g. Golden Crust" ${ro}></div>
+    <div class="field"><label for="setCur">Currency symbol</label><input id="setCur" value="${esc(S.settings.currency)}" maxlength="5" ${ro}></div></div>
+    ${S.canWrite ? `<div><button class="btn primary" data-act="save-settings">Save</button></div>` : ""}</div></section>
+  <section class="panel"><div class="panel-h"><div><h2>Locations</h2><div class="small muted">Each location keeps its own stock. A <b>Shared store</b> holds stock that both restaurant branches draw from.</div></div>${S.canWrite ? `<button class="btn" data-act="add-loc">+ Add location</button>` : ""}</div>
+    <div class="rows">${S.locs.map((l) => `<div class="row"><span class="dot" style="width:12px;height:12px;border-radius:50%;background:${locColor(l.id)}"></span>
+      <div class="main" style="display:flex;gap:8px;flex-wrap:wrap"><input class="btn" style="flex:1 1 180px;text-align:left;font-weight:400" id="ln-${esc(l.id)}" value="${esc(l.name)}" aria-label="Location name" ${ro}>
+      <select class="btn" id="lk-${esc(l.id)}" aria-label="Kind" ${ro}>${Object.entries(KINDS).map(([k, v]) => `<option value="${k}" ${l.kind === k ? "selected" : ""}>${v}</option>`).join("")}</select></div>
+      ${S.canWrite ? `<div class="acts"><button class="btn sm" data-act="save-loc" data-id="${esc(l.id)}">Save</button><button class="btn sm danger" data-act="del-loc" data-id="${esc(l.id)}">Remove</button></div>` : ""}</div>`).join("")}</div></section>
+  ${window.__stockSignOut ? `<section class="panel"><div class="panel-h"><div><h2>Account</h2><div class="small muted">Signed in as ${esc(window.__stockEmail || "")}</div></div><button class="btn" data-act="sign-out">Sign out</button></div></section>` : ""}
+  <section class="panel"><div class="panel-h"><h2>How to use</h2></div><div class="panel-b small" style="display:grid;gap:6px;max-width:70ch">
+    <div><b>Receive</b> when a delivery arrives or the bakery finishes a batch.</div>
+    <div><b>Use</b> at the end of a shift for what the kitchen used. When using straight from the shared store, pick which branch it was for.</div>
+    <div><b>Move</b> stock from the shared store to a branch (or between any two locations).</div>
+    <div><b>Waste</b> for anything spoiled or thrown away, so you can see what it costs you.</div>
+    <div><b>Count</b> once a week: enter what is really on the shelf and the stock is corrected.</div>
+  </div></section>`;
+}
+
+/* ---------- Modals ---------- */
+function openModal(html, wide) { $("#modal").innerHTML = `<div class="overlay" data-act="close-bg"><div class="sheet ${wide ? "wide" : ""}" role="dialog" aria-modal="true">${html}</div></div>`; const f = $("#modal").querySelector("[autofocus]"); if (f) f.focus(); }
+function closeModal() { $("#modal").innerHTML = ""; }
+const sheetHead = (title, sub) => `<div class="sheet-h"><div><h2>${title}</h2>${sub ? `<div class="small muted">${sub}</div>` : ""}</div><button class="x" data-act="close" aria-label="Close">×</button></div>`;
+
+const R = { type: "use", item: "", loc: "", to: "", forLoc: "" };
+function openRecord(opts = {}) {
+  R.type = opts.type || "use";
+  R.item = opts.item || "";
+  R.loc = opts.loc || (S.loc !== "all" ? S.loc : (S.locs[0]?.id || ""));
+  R.to = opts.to || "";
+  R.forLoc = "";
+  openModal(`<div id="recBody"></div>`);
+  drawRecord();
+}
+function drawRecord() {
+  const it = itemById(R.item);
+  const locOpts = (sel, exclude) => S.locs.filter((l) => l.id !== exclude).map((l) => `<option value="${esc(l.id)}" ${sel === l.id ? "selected" : ""}>${esc(l.name)}</option>`).join("");
+  const isSharedFrom = locById(R.loc)?.kind === "shared";
+  if (R.type === "transfer" && (!R.to || R.to === R.loc)) { const pref = isSharedFrom ? restaurantLocs()[0] : S.locs.find((l) => l.id !== R.loc); R.to = pref?.id || ""; }
+  const cats = categories(); const byCat = (c) => S.items.filter((i) => (i.category || "") === c).sort(sortItems);
+  const itemOpts = `<option value="">Choose an item…</option>` + [...cats, ""].map((c) => { const list = byCat(c); if (!list.length) return ""; const o = list.map((i) => `<option value="${esc(i.id)}" ${i.id === R.item ? "selected" : ""}>${esc(i.name)} (${esc(i.unit)})</option>`).join(""); return c ? `<optgroup label="${esc(c)}">${o}</optgroup>` : o; }).join("");
+  const showFor = isSharedFrom && (R.type === "use" || R.type === "waste");
+  $("#recBody").innerHTML = `${sheetHead("Record stock")}
+  <div class="seg" role="group" aria-label="What happened">${Object.entries(TYPES).map(([k, v]) => `<button type="button" data-act="rtype" data-id="${k}" aria-pressed="${R.type === k}">${v.label}</button>`).join("")}</div>
+  <div class="hint">${TYPES[R.type].help}</div>
+  <form class="form" id="recForm">
+    <div class="field"><label for="rItem">Item</label><select id="rItem" required>${itemOpts}</select></div>
+    <div class="${R.type === "transfer" ? "two" : ""}">
+      <div class="field"><label for="rLoc">${R.type === "transfer" ? "From" : "Location"}</label><select id="rLoc">${locOpts(R.loc)}</select></div>
+      ${R.type === "transfer" ? `<div class="field"><label for="rTo">To</label><select id="rTo">${locOpts(R.to, R.loc)}</select></div>` : ""}
+    </div>
+    ${showFor ? `<div class="field"><label for="rFor">Used by which branch?</label><select id="rFor" required><option value="">Choose a branch…</option>${restaurantLocs().map((b) => `<option value="${esc(b.id)}" ${R.forLoc === b.id ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></div>` : ""}
+    <div class="${R.type === "in" ? "two" : ""}">
+      <div class="field"><label for="rQty">${R.type === "count" ? "Quantity on the shelf" : "Quantity"}</label><div class="unit-in"><input id="rQty" type="number" inputmode="decimal" step="any" min="0" required autofocus><span>${esc(it?.unit || "unit")}</span></div></div>
+      ${R.type === "in" ? `<div class="field"><label for="rCost">Price per ${esc(it?.unit || "unit")} (optional)</label><input id="rCost" type="number" inputmode="decimal" step="any" min="0" placeholder="${it ? "Now " + (+it.cost || 0) : ""}"></div>` : ""}
+    </div>
+    <div class="field"><label for="rNote">Note (optional)</label><input id="rNote" placeholder="${R.type === "in" ? "Invoice number, supplier…" : R.type === "waste" ? "Reason, e.g. expired" : ""}"></div>
+    <div id="rHint"></div><div id="rErr" class="err"></div>
+    <div class="sheet-f"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" id="rSave">${TYPES[R.type].label === "Count" ? "Save count" : "Save " + TYPES[R.type].label.toLowerCase()}</button></div>
+  </form>`;
+  if (!it && !R.item) { const s = $("#rItem"); setTimeout(() => s && s.focus(), 0); }
+  recHint();
+}
+function recHint() {
+  const it = itemById(R.item); const h = $("#rHint"); if (!h) return;
+  const q = parseFloat($("#rQty")?.value); if (!it) { h.innerHTML = ""; return; }
+  const have = qtyAt(it, R.loc); let msg = `${esc(locName(R.loc))} has <b>${num(have)} ${esc(it.unit)}</b> now.`, warn = false;
+  if (!isNaN(q)) {
+    if (R.type === "in") msg += ` After: <b>${num(have + q)}</b>.`;
+    if (R.type === "use" || R.type === "waste" || R.type === "transfer") { msg += ` After: <b>${num(have - q)}</b>.`; if (q > have) { warn = true; msg += " That is more than is recorded here; check the count."; } }
+    if (R.type === "transfer" && R.to) msg += ` ${esc(locName(R.to))} will have <b>${num(qtyAt(it, R.to) + q)}</b>.`;
+    if (R.type === "count") { const d = q - have; msg += ` Difference: <b>${d >= 0 ? "+" : "−"}${num(Math.abs(d))}</b>.`; }
+  }
+  if (!stockedAt(it, R.loc) && R.type !== "in" && R.type !== "count") { warn = true; msg += ` This item is not usually kept at ${esc(locName(R.loc))}.`; }
+  h.innerHTML = `<div class="hint ${warn ? "warn" : ""}">${msg}</div>`;
+}
+
+async function applyMove(m) {
+  // m: {type, itemId, loc, toLoc?, forLoc?, qty, note, cost?, newCost?}
+  const ref = S.db.doc("items/" + m.itemId);
+  const snap = await ref.get(); if (!snap.exists) throw new Error("This item no longer exists.");
+  const it = snap.data(); const stock = it.stock || {}; const cur = (l) => +(stock[l] ?? 0);
+  const delta = {};
+  if (m.type === "in") delta[m.loc] = m.qty;
+  else if (m.type === "use" || m.type === "waste") delta[m.loc] = -m.qty;
+  else if (m.type === "transfer") { delta[m.loc] = -m.qty; delta[m.toLoc] = m.qty; }
+  else if (m.type === "count") delta[m.loc] = r3(m.qty - cur(m.loc));
+  const patch = { stock: {} };
+  for (const [l, d] of Object.entries(delta)) patch.stock[l] = S.db.increment && m.type !== "count" ? S.db.increment(d) : r3(cur(l) + d);
+  const locs = new Set(it.locs || []); let addLoc = false;
+  for (const l of Object.keys(delta)) if (!locs.has(l) && (m.type === "in" || m.type === "count" || l === m.toLoc)) { locs.add(l); addLoc = true; }
+  if (addLoc) patch.locs = [...locs];
+  if (m.type === "in" && m.newCost != null && !isNaN(m.newCost)) patch.cost = m.newCost;
+  await ref.update(patch);
+  const rec = { at: Date.now(), type: m.type, itemId: m.itemId, itemName: it.name, unit: it.unit || "", loc: m.loc, qty: r3(m.qty), cost: m.newCost ?? (+it.cost || 0), delta, note: m.note || "", by: S.uid || "" };
+  if (m.toLoc) rec.toLoc = m.toLoc; if (m.forLoc) rec.forLoc = m.forLoc; if (it.example) rec.example = true;
+  await S.db.collection("moves").add(rec);
+}
+async function submitRecord() {
+  const err = $("#rErr"); err.textContent = "";
+  const qty = parseFloat($("#rQty").value);
+  if (!R.item) return (err.textContent = "Choose an item.");
+  if (isNaN(qty) || qty < 0 || (qty === 0 && R.type !== "count")) return (err.textContent = "Enter a quantity above zero.");
+  if (R.type === "transfer" && (!R.to || R.to === R.loc)) return (err.textContent = "Choose a different location to move to.");
+  const fEl = $("#rFor"); if (fEl && !fEl.value) return (err.textContent = "Choose which branch used it.");
+  const costRaw = $("#rCost")?.value; const btn = $("#rSave"); btn.disabled = true;
+  try {
+    await applyMove({ type: R.type, itemId: R.item, loc: R.loc, toLoc: R.type === "transfer" ? R.to : undefined, forLoc: fEl ? fEl.value : undefined, qty, note: $("#rNote").value.trim(), newCost: costRaw ? parseFloat(costRaw) : null });
+    closeModal(); toast(`${TYPES[R.type].verb} ${num(qty)} ${itemById(R.item)?.unit || ""} of ${itemById(R.item)?.name || "item"}`);
+    S.rep.data = null;
+  } catch (e) { btn.disabled = false; err.textContent = writeErr(e); }
+}
+function writeErr(e) {
+  if (e && e.code === "invalid_argument") { return "You can view this stock but not change it."; }
+  if (e && e.code === "quota_exceeded") return "Storage is full. Remove old history or example data in Settings.";
+  return (e && e.message) || "Could not save. Check your connection and try again.";
+}
+
+function itemDetail(id) {
+  const it = itemById(id); if (!it) return;
+  const ms = S.moves.filter((m) => m.itemId === id).slice(0, 12);
+  const locs = S.locs.filter((l) => stockedAt(it, l.id) || qtyAt(it, l.id) !== 0);
+  openModal(`${sheetHead(esc(it.name), esc([it.category, it.supplier, `${money(it.cost)} per ${it.unit}`].filter(Boolean).join(" · ")))}
+  <div class="rows panel">${locs.length ? locs.map((l) => { const s = statusOf(it, l.id); return `<div class="row"><div class="main">${lname(l.id)}</div><div class="qty"><b>${num(qtyAt(it, l.id))}</b> <span class="muted">${esc(it.unit)}</span><div class="small muted">min ${num(minAt(it, l.id))}</div></div><span class="pill ${s}">${STATUS_LABEL[s]}</span></div>`; }).join("") : `<div class="empty">Not kept at any location yet.</div>`}</div>
+  ${S.canWrite ? `<div class="toolbar">${Object.entries(TYPES).map(([k, v]) => `<button class="btn ${k === "use" ? "primary" : ""}" data-act="record" data-type="${k}" data-item="${esc(id)}">${v.label}</button>`).join("")}<span style="flex:1"></span><button class="btn" data-act="edit-item" data-id="${esc(id)}">Edit item</button></div>` : ""}
+  <h3>Recent</h3><div class="rows panel">${ms.length ? ms.map(moveRow).join("") : `<div class="empty">No history yet.</div>`}</div>`, true);
+}
+
+function itemForm(id) {
+  const it = id ? itemById(id) : { name: "", category: "", unit: "kg", cost: "", supplier: "", locs: S.loc !== "all" ? [S.loc] : [], min: {}, stock: {} };
+  const units = UNITS.includes(it.unit) ? UNITS : [it.unit, ...UNITS];
+  openModal(`${sheetHead(id ? "Edit item" : "New item")}
+  <form class="form" id="itemForm" data-id="${esc(id || "")}">
+    <div class="field"><label for="iName">Name</label><input id="iName" required value="${esc(it.name)}" placeholder="e.g. Bread flour" autofocus></div>
+    <div class="two"><div class="field"><label for="iCat">Category</label><input id="iCat" list="catList" value="${esc(it.category)}" placeholder="e.g. Dry goods"><datalist id="catList">${[...new Set([...categories(), "Dry goods", "Dairy", "Meat & fish", "Produce", "Frozen", "Drinks", "Packaging", "Cleaning"])].map((c) => `<option value="${esc(c)}">`).join("")}</datalist></div>
+    <div class="field"><label for="iUnit">Unit</label><select id="iUnit">${units.map((u) => `<option ${u === it.unit ? "selected" : ""}>${esc(u)}</option>`).join("")}</select></div></div>
+    <div class="two"><div class="field"><label for="iCost">Cost per unit (${esc(S.settings.currency)})</label><input id="iCost" type="number" step="any" min="0" inputmode="decimal" value="${esc(it.cost)}"></div>
+    <div class="field"><label for="iSup">Supplier</label><input id="iSup" value="${esc(it.supplier)}" placeholder="Who you order from"></div></div>
+    <div class="field"><span class="lab">Where it is kept</span><div class="table-wrap"><table class="loc-table"><thead><tr><th>Keep here</th><th>Location</th><th class="n">Minimum</th>${id ? "" : `<th class="n">Now on shelf</th>`}</tr></thead><tbody>
+    ${S.locs.map((l) => `<tr><td><input type="checkbox" id="ik-${esc(l.id)}" ${stockedAt(it, l.id) ? "checked" : ""} aria-label="Keep at ${esc(l.name)}"></td><td>${lname(l.id)}</td><td class="n"><input type="number" step="any" min="0" id="im-${esc(l.id)}" value="${it.min?.[l.id] ?? ""}" placeholder="0" aria-label="Minimum at ${esc(l.name)}"></td>${id ? "" : `<td class="n"><input type="number" step="any" min="0" id="is-${esc(l.id)}" placeholder="0" aria-label="Starting quantity at ${esc(l.name)}"></td>`}</tr>`).join("")}
+    </tbody></table></div><div class="small muted">You get a low-stock alert when a location drops to its minimum.</div></div>
+    <div id="iErr" class="err"></div>
+    <div id="iConfirm"></div>
+    <div class="sheet-f">${id ? `<button type="button" class="btn danger" data-act="del-item" data-id="${esc(id)}" style="margin-right:auto">Delete item</button>` : ""}<button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" id="iSave">${id ? "Save changes" : "Add item"}</button></div>
+  </form>`);
+}
+async function submitItem(form) {
+  const id = form.dataset.id; const err = $("#iErr"); err.textContent = "";
+  const name = $("#iName").value.trim(); if (!name) return (err.textContent = "Give the item a name.");
+  if (S.items.some((i) => i.id !== id && i.name.toLowerCase() === name.toLowerCase())) return (err.textContent = "An item with this name already exists.");
+  const locs = [], min = {}, start = {};
+  for (const l of S.locs) { const k = $("#ik-" + CSS.escape(l.id)); const mv = parseFloat($("#im-" + CSS.escape(l.id)).value); const sEl = $("#is-" + CSS.escape(l.id)); const sv = sEl ? parseFloat(sEl.value) : NaN;
+    if (k.checked || (!isNaN(sv) && sv > 0)) locs.push(l.id); if (!isNaN(mv)) min[l.id] = mv; if (!isNaN(sv) && sv > 0) start[l.id] = sv; }
+  const body = { name, category: $("#iCat").value.trim(), unit: $("#iUnit").value, cost: parseFloat($("#iCost").value) || 0, supplier: $("#iSup").value.trim(), locs, min };
+  $("#iSave").disabled = true;
+  try {
+    if (id) { const old = itemById(id); body.min = { ...Object.fromEntries(Object.keys(old.min || {}).map((k) => [k, 0])), ...min }; await S.db.doc("items/" + id).update(body); }
+    else {
+      const ref = S.db.collection("items").doc(); await ref.set({ ...body, stock: {}, created: Date.now() });
+      for (const [l, q] of Object.entries(start)) await applyMove({ type: "count", itemId: ref.id, loc: l, qty: q, note: "Opening stock" });
+    }
+    closeModal(); toast(id ? "Item saved" : `Added ${name}`);
+  } catch (e) { $("#iSave").disabled = false; err.textContent = writeErr(e); }
+}
+
+function countSheet() {
+  const l = S.loc; const items = S.items.filter((it) => stockedAt(it, l)).sort(sortItems);
+  openModal(`${sheetHead("Stock count · " + esc(locName(l)), "Enter what is on the shelf. Leave a box empty to skip that item.")}
+  <form class="form" id="countForm"><div class="table-wrap"><table class="loc-table"><thead><tr><th>Item</th><th class="n">Recorded</th><th class="n">Counted</th></tr></thead><tbody>
+  ${items.map((it) => `<tr><td><b>${esc(it.name)}</b><div class="small muted">${esc(it.category || "")}</div></td><td class="n">${num(qtyAt(it, l))} ${esc(it.unit)}</td><td class="n"><input type="number" step="any" min="0" inputmode="decimal" data-item="${esc(it.id)}" aria-label="Counted ${esc(it.name)}"></td></tr>`).join("")}
+  </tbody></table></div><div id="cErr" class="err"></div>
+  <div class="sheet-f"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" id="cSave">Save count</button></div></form>`, true);
+}
+async function submitCount() {
+  const inputs = [...document.querySelectorAll("#countForm input[data-item]")].filter((i) => i.value !== "");
+  if (!inputs.length) return ($("#cErr").textContent = "Enter at least one counted quantity.");
+  const btn = $("#cSave"); btn.disabled = true; let n = 0;
+  try { for (const i of inputs) { const it = itemById(i.dataset.item); const q = parseFloat(i.value); if (it && !isNaN(q) && r3(q) !== r3(qtyAt(it, S.loc))) { btn.textContent = `Saving ${++n}…`; await applyMove({ type: "count", itemId: it.id, loc: S.loc, qty: q, note: "Stock count" }); } }
+    closeModal(); toast(n ? `Count saved: ${n} item${n > 1 ? "s" : ""} corrected` : "Count matched. Nothing to change.");
+  } catch (e) { btn.disabled = false; btn.textContent = "Save count"; $("#cErr").textContent = writeErr(e); }
+}
+
+async function undoMove(id) {
+  const m = S.moves.find((x) => x.id === id); if (!m) return;
+  openModal(`${sheetHead("Undo this entry?")}<div class="rows panel">${moveRow({ ...m, _noUndo: true })}</div><div class="hint">Stock goes back by the same amount and the entry is removed from history.</div><div id="uErr" class="err"></div><div class="sheet-f"><button class="btn" data-act="close">Keep it</button><button class="btn primary" data-act="undo-yes" data-id="${esc(id)}">Undo entry</button></div>`);
+}
+async function undoYes(id) {
+  const m = S.moves.find((x) => x.id === id); if (!m) return closeModal();
+  try {
+    const ref = S.db.doc("items/" + m.itemId); const snap = await ref.get();
+    if (snap.exists) { const st = snap.data().stock || {}; const patch = { stock: {} }; for (const [l, d] of Object.entries(m.delta || {})) patch.stock[l] = S.db.increment ? S.db.increment(-d) : r3((+st[l] || 0) - d); await ref.update(patch); }
+    await S.db.doc("moves/" + id).delete(); closeModal(); toast("Entry undone"); S.rep.data = null;
+  } catch (e) { $("#uErr").textContent = writeErr(e); }
+}
+
+/* ---------- CSV ---------- */
+const csv = (rows) => rows.map((r) => r.map((v) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }).join(",")).join("\n");
+async function download(filename, rows) {
+  const dl = S.dl || (S.dl = await window.claude?.use?.("downloads"));
+  if (!dl) return toast("Downloads are not available here.");
+  try { await dl.save({ filename, data: "﻿" + csv(rows) }); } catch (e) { if (e?.code !== "declined") toast("Could not download the file."); }
+}
+function exportStock() {
+  const head = ["Item", "Category", "Unit", "Cost per unit", "Supplier", ...S.locs.flatMap((l) => [l.name, l.name + " min"]), "Total", "Value"];
+  const rows = filteredItems().map((it) => { let t = 0; const cells = S.locs.flatMap((l) => { const q = stockedAt(it, l.id) ? qtyAt(it, l.id) : ""; if (q !== "") t += q; return [q, stockedAt(it, l.id) ? minAt(it, l.id) : ""]; }); return [it.name, it.category, it.unit, it.cost, it.supplier, ...cells, r3(t), (Math.max(0, t) * (+it.cost || 0)).toFixed(2)]; });
+  download(`stock-${isoDay(new Date())}.csv`, [head, ...rows]);
+}
+function exportReorder() { const rows = [["Supplier", "Item", "Location", "Have", "Minimum", "Order", "Unit"]]; for (const [sup, list] of reorderGroups()) for (const r of list) rows.push([sup, r.it.name, locName(r.l), r.have, r.min, r.need, r.it.unit]); download(`reorder-${isoDay(new Date())}.csv`, rows); }
+function exportReport() { const Rr = computeReport(); if (!Rr) return; const [f, t] = rangeFor(S.rep.preset);
+  const rows = [["Item", "Unit", "Received", "Used", "Wasted", "Moved in", "Moved out", "Count difference", "Cost received", "Cost used", "Cost wasted"], ...Rr.rows.map((r) => [r.name, r.unit, r3(r.inQ), r3(r.useQ), r3(r.wasteQ), r3(r.tIn), r3(r.tOut), r3(r.adj), r.inV.toFixed(2), r.useV.toFixed(2), r.wasteV.toFixed(2)])];
+  download(`report-${S.loc === "all" ? "all" : locName(S.loc).replace(/\W+/g, "-").toLowerCase()}-${isoDay(f)}.csv`, rows); }
+async function copyReorder() {
+  const lines = []; for (const [sup, list] of reorderGroups()) { lines.push(sup + ":"); for (const r of list) lines.push(`- ${r.it.name}: ${num(r.need)} ${r.it.unit} (${locName(r.l)})`); lines.push(""); }
+  const text = lines.join("\n");
+  try { await navigator.clipboard.writeText(text); toast("Reorder list copied"); }
+  catch (e) { openModal(`${sheetHead("Reorder list")}<textarea id="copyTxt" rows="14" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface)">${esc(text)}</textarea><div class="small muted">Select the text and copy it.</div>`); const t = $("#copyTxt"); t.focus(); t.select(); }
+}
+
+/* ---------- Events ---------- */
+document.addEventListener("click", async (ev) => {
+  const el = ev.target.closest("[data-act]"); if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  if (act === "close-bg") { if (ev.target === el) closeModal(); return; }
+  if (act === "close") return closeModal();
+  if (act === "loc") { S.loc = id; S.rep.data = S.rep.data; try { localStorage.setItem("stock.loc", id); } catch (e) {} return render(); }
+  if (act === "tab") { S.tab = id; closeModal(); try { localStorage.setItem("stock.tab", id); } catch (e) {} window.scrollTo(0, 0); return render(); }
+  if (act === "open-loc") { S.loc = id; S.tab = "stock"; try { localStorage.setItem("stock.loc", id); } catch (e) {} return render(); }
+  if (act === "item") return itemDetail(id);
+  if (act === "record") { ev.stopPropagation(); return openRecord({ type: el.dataset.type, item: el.dataset.item, loc: el.dataset.loc, to: el.dataset.to }); }
+  if (act === "rtype") { R.type = id; R.forLoc = $("#rFor")?.value || ""; return drawRecord(); }
+  if (act === "new-item") return itemForm();
+  if (act === "edit-item") return itemForm(id);
+  if (act === "del-item") { $("#iConfirm").innerHTML = `<div class="confirm"><span>Delete <b>${esc(itemById(id)?.name)}</b>? History entries stay.</span><button type="button" class="btn danger" data-act="del-item-yes" data-id="${esc(id)}">Delete</button></div>`; return; }
+  if (act === "del-item-yes") { try { await S.db.doc("items/" + id).delete(); closeModal(); toast("Item deleted"); } catch (e) { $("#iErr").textContent = writeErr(e); } return; }
+  if (act === "count-sheet") return countSheet();
+  if (act === "undo") return undoMove(id);
+  if (act === "undo-yes") return undoYes(id);
+  if (act === "export-stock") return exportStock();
+  if (act === "export-reorder") return exportReorder();
+  if (act === "export-report") return exportReport();
+  if (act === "copy-reorder") return copyReorder();
+  if (act === "clear-examples") return openModal(`${sheetHead("Remove example data?")}<div class="hint">This deletes the example items and their history. Your locations stay.</div><div id="xErr" class="err"></div><div class="sheet-f"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="clear-yes">Remove examples</button></div>`);
+  if (act === "clear-yes") { el.disabled = true; try { for (const it of S.items.filter((i) => i.example)) await S.db.doc("items/" + it.id).delete(); const ms = await S.db.collection("moves").where("example", "==", true).limit(1000).get(); for (const d of ms.docs) await S.db.doc("moves/" + d.id).delete(); closeModal(); toast("Examples removed"); S.rep.data = null; } catch (e) { $("#xErr").textContent = writeErr(e); el.disabled = false; } return; }
+  if (act === "save-settings") { try { await S.db.doc("settings/main").set({ name: $("#setName").value.trim(), currency: $("#setCur").value.trim() }); toast("Saved"); } catch (e) { toast(writeErr(e)); } return; }
+  if (act === "save-loc") { const name = $("#ln-" + CSS.escape(id)).value.trim(); if (!name) return toast("Give the location a name."); try { await S.db.doc("locations/" + id).update({ name, kind: $("#lk-" + CSS.escape(id)).value }); toast("Location saved"); } catch (e) { toast(writeErr(e)); } return; }
+  if (act === "default-locs") { el.disabled = true; try { const d = [["bakery", "Bakery", "bakery"], ["branch1", "Restaurant – Branch 1", "restaurant"], ["branch2", "Restaurant – Branch 2", "restaurant"], ["shared", "Shared Store", "shared"]];
+    for (let i = 0; i < d.length; i++) await S.db.doc("locations/" + d[i][0]).set({ name: d[i][1], kind: d[i][2], order: i + 1 }); toast("Locations created"); } catch (e) { el.disabled = false; toast(writeErr(e)); } return; }
+  if (act === "sign-out") { if (window.__stockSignOut) window.__stockSignOut(); return; }
+  if (act === "add-loc") { try { await S.db.collection("locations").add({ name: "New location", kind: "restaurant", order: Math.max(0, ...S.locs.map((l) => l.order || 0)) + 1 }); toast("Location added. Rename it below."); } catch (e) { toast(writeErr(e)); } return; }
+  if (act === "del-loc") { const used = S.items.filter((it) => qtyAt(it, id) !== 0); if (used.length) return toast(`Move or count out the ${used.length} items with stock here first.`);
+    return openModal(`${sheetHead("Remove " + esc(locName(id)) + "?")}<div class="hint">Items stop being tracked here. History stays.</div><div class="sheet-f"><button class="btn" data-act="close">Cancel</button><button class="btn danger" data-act="del-loc-yes" data-id="${esc(id)}">Remove location</button></div>`); }
+  if (act === "del-loc-yes") { try { await S.db.doc("locations/" + id).delete(); for (const it of S.items.filter((i) => stockedAt(i, id))) await S.db.doc("items/" + it.id).update({ locs: it.locs.filter((x) => x !== id) }); closeModal(); toast("Location removed"); } catch (e) { toast(writeErr(e)); } return; }
+});
+document.addEventListener("input", (ev) => {
+  const t = ev.target;
+  if (t.id === "q") { S.q = t.value; render(); }
+  else if (t.id === "hQ") { S.hQ = t.value; render(); }
+  else if (t.id === "rQty") recHint();
+});
+document.addEventListener("change", (ev) => {
+  const t = ev.target;
+  if (t.id === "cat") { S.cat = t.value; render(); }
+  else if (t.id === "lowOnly") { S.lowOnly = t.checked; render(); }
+  else if (t.id === "hType") { S.hType = t.value; render(); }
+  else if (t.id === "rItem") { R.item = t.value; const q = $("#rQty").value; const n = $("#rNote").value; R.forLoc = $("#rFor")?.value || ""; drawRecord(); $("#rQty").value = q; $("#rNote").value = n; recHint(); $("#rQty").focus(); }
+  else if (t.id === "rLoc") { R.loc = t.value; const q = $("#rQty").value; R.forLoc = $("#rFor")?.value || ""; drawRecord(); $("#rQty").value = q; recHint(); }
+  else if (t.id === "rTo") { R.to = t.value; recHint(); }
+  else if (t.id === "repPreset") { S.rep.preset = t.value; S.rep.data = null; render(); }
+  else if (t.id === "repFrom" || t.id === "repTo") { S.rep.from = $("#repFrom").value; S.rep.to = $("#repTo").value; S.rep.data = null; render(); }
+});
+document.addEventListener("submit", (ev) => {
+  ev.preventDefault(); const f = ev.target;
+  if (f.id === "recForm") submitRecord(); else if (f.id === "itemForm") submitItem(f); else if (f.id === "countForm") submitCount();
+});
+document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && $("#modal").innerHTML) closeModal(); });
+
+/* ---------- Boot ---------- */
+async function resolveNames() {
+  if (!S.user) return; const ids = [...new Set(S.moves.map((m) => m.by).filter((b) => b && !(b in S.names)))]; if (!ids.length) return;
+  try { const ps = await S.user.profiles(ids); for (const i of ids) S.names[i] = ps[i]?.name || ""; render(); } catch (e) {}
+}
+async function boot() {
+  render();
+  if (!window.claude?.use) { S.status = "nodb"; return render(); }
+  const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+  if (!db) { S.status = "nodb"; return render(); }
+  S.db = db; S.user = user; S.status = "ready";
+  if (user) { try { S.uid = await user.id(); } catch (e) {} try { const c = await user.can("data.write"); if (c === false) S.canWrite = false; } catch (e) {} }
+  const onErr = (e) => { if (e?.code === "revoked") { S.status = "nodb"; render(); } };
+  db.collection("locations").onSnapshot((s) => { S.locs = s.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name)); S.got.locs = true; render(); }, onErr);
+  db.collection("items").onSnapshot((s) => { S.items = s.docs.map((d) => ({ id: d.id, ...d.data() })); S.got.items = true; render(); if (!$("#modal").innerHTML) return; if ($("#rHint")) recHint(); }, onErr);
+  db.collection("moves").orderBy("at", "desc").limit(300).onSnapshot((s) => { S.moves = s.docs.map((d) => ({ id: d.id, ...d.data() })); S.got.moves = true; render(); resolveNames(); }, onErr);
+  db.doc("settings/main").onSnapshot((s) => { S.settings = { ...DEFAULT_SETTINGS, ...(s.data() || {}) }; render(); }, onErr);
+}
+boot();
+})();
+</script>
+
+</body>
+</html>
