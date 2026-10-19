@@ -15,7 +15,8 @@
   --bg: #f3f5f8; --surface: #ffffff; --sunk: #e9edf3; --ink: #162030; --muted: #5a6577; --line: #d9dee7;
   --accent: #b5600c; --accent-soft: #fbeedd; --accent-ink: #ffffff;
   --ok: #1d7a4b; --ok-soft: #e1f3e9; --warn: #9a5b00; --warn-soft: #fdf0d6; --bad: #b42318; --bad-soft: #fde4e1;
-  --c0: #c27a12; --c1: #2f6fd0; --c2: #7a4fd0; --c3: #20895a; --c4: #c2416d; --c5: #158a92;
+  --c0: #b86a0a; --c1: #2563c9; --c2: #c0267a; --c3: #0e8a7e; --c4: #7a4fd0; --c5: #5f8f1f; --on-lc: #ffffff;
+  --t-in: #1d7a4b; --t-use: #3b55c9; --t-waste: #b42318; --t-transfer: #c45a00; --t-count: #6b46c1;
   --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --f-body: "Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
   --f-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -25,13 +26,15 @@
   --bg: #0e131a; --surface: #161d27; --sunk: #1d2633; --ink: #e7ebf1; --muted: #98a3b4; --line: #2a3443;
   --accent: #f0a347; --accent-soft: #3a2a14; --accent-ink: #1b1206;
   --ok: #4cc38a; --ok-soft: #143325; --warn: #f2b351; --warn-soft: #3a2b10; --bad: #ff7b6e; --bad-soft: #3d1a17;
-  --c0: #f0a347; --c1: #6aa3ff; --c2: #ad8cff; --c3: #4cc38a; --c4: #ff7aa6; --c5: #4fc9d1;
+  --c0: #f0a347; --c1: #6aa3ff; --c2: #ff6fb0; --c3: #3fd0bd; --c4: #b79cff; --c5: #a6d65a; --on-lc: #0e131a;
+  --t-in: #4cc38a; --t-use: #8ea2ff; --t-waste: #ff7b6e; --t-transfer: #ff9f4a; --t-count: #b79cff;
   --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #0e131a; --surface: #161d27; --sunk: #1d2633; --ink: #e7ebf1; --muted: #98a3b4; --line: #2a3443;
   --accent: #f0a347; --accent-soft: #3a2a14; --accent-ink: #1b1206;
   --ok: #4cc38a; --ok-soft: #143325; --warn: #f2b351; --warn-soft: #3a2b10; --bad: #ff7b6e; --bad-soft: #3d1a17;
-  --c0: #f0a347; --c1: #6aa3ff; --c2: #ad8cff; --c3: #4cc38a; --c4: #ff7aa6; --c5: #4fc9d1;
+  --c0: #f0a347; --c1: #6aa3ff; --c2: #ff6fb0; --c3: #3fd0bd; --c4: #b79cff; --c5: #a6d65a; --on-lc: #0e131a;
+  --t-in: #4cc38a; --t-use: #8ea2ff; --t-waste: #ff7b6e; --t-transfer: #ff9f4a; --t-count: #b79cff;
   --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -49,7 +52,7 @@ button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Header */
-header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 4px solid var(--hdr, var(--line)); }
 .top-row { display: flex; align-items: center; gap: 12px; padding-block: 12px 8px; flex-wrap: wrap; }
 .brand { display: flex; align-items: baseline; gap: 10px; flex: 1 1 auto; min-width: 0; }
 .brand h1 { font-size: 1.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -59,6 +62,10 @@ header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; b
 .chip { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-size: .88rem; }
 .chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip.loc { border-color: color-mix(in srgb, var(--lc) 45%, var(--line)); }
+.chip.loc .dot { background: var(--lc); }
+.chip.loc[aria-pressed="true"] { background: var(--lc); border-color: var(--lc); color: var(--on-lc); font-weight: 600; }
+.chip.loc[aria-pressed="true"] .dot { background: var(--on-lc); }
 .tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab { border: 0; background: none; padding: 10px 12px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
@@ -82,8 +89,9 @@ main { padding-block: 18px 110px; display: grid; gap: 18px; }
 
 /* Location cards */
 .loc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-.loc-card { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 6px; border-top: 4px solid var(--lc, var(--muted)); }
-.loc-card:hover { background: var(--sunk); }
+.loc-card { text-align: left; background: color-mix(in srgb, var(--lc) 7%, var(--surface)); border: 1px solid color-mix(in srgb, var(--lc) 35%, var(--line)); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 6px; border-top: 6px solid var(--lc, var(--muted)); }
+.loc-card:hover { background: color-mix(in srgb, var(--lc) 14%, var(--surface)); }
+.loc-card .name { color: var(--lc); }
 .loc-card .kind { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 .loc-card .name { font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; }
 .loc-card .val { font-family: var(--f-num); font-size: 1.35rem; }
@@ -94,11 +102,8 @@ main { padding-block: 18px 110px; display: grid; gap: 18px; }
 .pill.ok { background: var(--ok-soft); color: var(--ok); }
 .pill.low { background: var(--warn-soft); color: var(--warn); }
 .pill.out { background: var(--bad-soft); color: var(--bad); }
-.pill.t-in { background: var(--ok-soft); color: var(--ok); }
-.pill.t-use { background: var(--sunk); color: var(--ink); }
-.pill.t-waste { background: var(--bad-soft); color: var(--bad); }
-.pill.t-transfer { background: var(--accent-soft); color: var(--accent); }
-.pill.t-count { background: var(--sunk); color: var(--muted); }
+.tc-in { --tc: var(--t-in); } .tc-use { --tc: var(--t-use); } .tc-waste { --tc: var(--t-waste); } .tc-transfer { --tc: var(--t-transfer); } .tc-count { --tc: var(--t-count); }
+.pill.tpill { background: color-mix(in srgb, var(--tc) 15%, var(--surface)); color: var(--tc); }
 .lname { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .lname::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--lc, var(--muted)); }
 
@@ -171,6 +176,36 @@ tfoot td { font-weight: 600; }
 .loc-table input[type=number] { width: 100px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
 .confirm { background: var(--bad-soft); border-radius: 8px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 
+.loc-band { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-radius: var(--r); background: color-mix(in srgb, var(--lc) 15%, var(--surface)); border: 1px solid color-mix(in srgb, var(--lc) 45%, var(--line)); }
+.loc-band .sw { width: 14px; height: 14px; border-radius: 4px; background: var(--lc); flex: none; }
+.loc-band b { color: var(--lc); font-family: var(--f-display); font-size: 1.05rem; }
+.row.lc { border-left: 4px solid var(--lc); }
+th.loc-col { background: color-mix(in srgb, var(--lc) 16%, var(--surface)); color: var(--ink); }
+td.loc-col { background: color-mix(in srgb, var(--lc) 6%, transparent); }
+.tchoice { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.tcard { display: flex; gap: 12px; align-items: flex-start; text-align: left; padding: 14px; border-radius: 12px; border: 2px solid color-mix(in srgb, var(--tc) 35%, var(--line)); background: color-mix(in srgb, var(--tc) 8%, var(--surface)); }
+.tcard:hover, .tcard:focus-visible { border-color: var(--tc); }
+.tcard b { display: block; font-size: 1.1rem; color: var(--tc); }
+.tcard .ex { font-size: .84rem; color: var(--muted); }
+.tglyph { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--tc); color: var(--surface); font-weight: 700; font-size: 1.35rem; font-family: var(--f-num); line-height: 1; }
+.tbanner { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--tc) 12%, var(--surface)); border: 2px solid var(--tc); }
+.tbanner .t { flex: 1; min-width: 0; }
+.tbanner b { color: var(--tc); font-size: 1.15rem; }
+.btn.tbtn { background: var(--tc); border-color: var(--tc); color: var(--surface); font-weight: 600; }
+.btn.tsoft { color: var(--tc); border-color: color-mix(in srgb, var(--tc) 45%, var(--line)); background: color-mix(in srgb, var(--tc) 8%, var(--surface)); font-weight: 600; }
+.summary-line { font-size: 1rem; padding: 10px 12px; border-radius: 8px; background: color-mix(in srgb, var(--tc) 10%, var(--surface)); border-left: 4px solid var(--tc); }
+.summary-line .q { color: var(--tc); font-weight: 700; }
+.lock { max-width: 400px; width: 100%; margin: 30px auto; text-align: center; display: grid; gap: 12px; padding: 24px; }
+.lock input { font-size: 1.4rem; text-align: center; letter-spacing: .3em; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-family: var(--f-num); width: 100%; }
+.tab svg { width: 11px; height: 11px; margin-left: 4px; vertical-align: -1px; opacity: .65; }
+.tab.lockbtn { margin-left: auto; color: var(--accent); }
+.hbar { display: grid; grid-template-columns: minmax(70px, 170px) minmax(60px, 1fr) 84px; gap: 10px; align-items: center; padding: 6px 0; }
+.hbar > * { min-width: 0; } .hbar > .num { text-align: right; } .hbar > .small:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stack { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--sunk); }
+.stack span { display: block; height: 100%; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+tr.cat-row td { background: var(--sunk); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); z-index: 30; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: .9rem; max-width: calc(100% - 32px); }
 .state { padding: 60px 16px; text-align: center; color: var(--muted); }
 @media (prefers-reduced-motion: no-preference) { .sheet { animation: up .18s ease-out; } @keyframes up { from { transform: translateY(16px); opacity: .6; } } }
@@ -451,14 +486,15 @@ const S = {
   rep: { preset: "month", from: "", to: "", data: null, loading: false },
 };
 try { const v = localStorage.getItem("stock.loc"); if (v) S.loc = v; const t = localStorage.getItem("stock.tab"); if (t) S.tab = t; } catch (e) {}
+try { S.unlockedHash = sessionStorage.getItem("stock.unlock") || ""; } catch (e) { S.unlockedHash = ""; }
 
-const TABS = [["overview", "Overview"], ["stock", "Stock"], ["history", "History"], ["reorder", "Reorder"], ["reports", "Reports"], ["settings", "Settings"]];
+const TABS = [["overview", "Overview"], ["dashboard", "Dashboard"], ["stock", "Stock"], ["history", "History"], ["reorder", "Reorder"], ["reports", "Reports"], ["settings", "Settings"]];
 const TYPES = {
-  in: { label: "Receive", verb: "Received", help: "Stock arriving from a supplier, or bread and pastry made in the bakery." },
-  use: { label: "Use", verb: "Used", help: "Stock used in the kitchen or sold." },
-  waste: { label: "Waste", verb: "Wasted", help: "Spoiled, expired, dropped or burnt." },
-  transfer: { label: "Move", verb: "Moved", help: "Move stock between locations, for example from the shared store to a branch." },
-  count: { label: "Count", verb: "Counted", help: "Enter the real quantity on the shelf after counting. The difference is recorded." },
+  in: { label: "Receive", verb: "Received", glyph: "+", short: "Stock comes in", help: "A delivery arrived, or the bakery baked a batch. Stock goes up." },
+  use: { label: "Use", verb: "Used", glyph: "−", short: "Used or sold", help: "Used for cooking or sold to customers. Stock goes down." },
+  waste: { label: "Waste", verb: "Wasted", glyph: "×", short: "Thrown away", help: "Expired, spoiled, burnt or dropped. Stock goes down and shows as waste in reports." },
+  transfer: { label: "Move", verb: "Moved", glyph: "→", short: "Moved to another place", help: "For example Shared Store to Branch 1. One place goes down, the other goes up." },
+  count: { label: "Count", verb: "Counted", glyph: "=", short: "Checked the shelf", help: "You counted it. Type the real amount and the app corrects the number." },
 };
 const KINDS = { bakery: "Bakery", restaurant: "Restaurant", shared: "Shared store", other: "Other" };
 const UNITS = ["kg", "g", "L", "ml", "pcs", "dozen", "pack", "box", "bag", "bottle", "can", "tray", "loaf", "portion"];
@@ -470,7 +506,15 @@ const num = (n) => r3(n).toLocaleString(undefined, { maximumFractionDigits: 3 })
 const money = (n) => esc(S.settings.currency || "") + (Math.round((+n || 0) * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const locById = (id) => S.locs.find((l) => l.id === id);
 const locName = (id) => locById(id)?.name || "Removed location";
-const locColor = (id) => { const i = S.locs.findIndex((l) => l.id === id); return `var(--c${(i < 0 ? 0 : i) % 6})`; };
+const COLORS = ["Amber", "Blue", "Pink", "Teal", "Purple", "Green"];
+const locColorIdx = (id) => { const l = locById(id); if (l && Number.isInteger(l.color)) return l.color % 6; const i = S.locs.findIndex((x) => x.id === id); return (i < 0 ? 0 : i) % 6; };
+const locColor = (id) => `var(--c${locColorIdx(id)})`;
+const LOCKED = ["overview", "dashboard", "reports", "settings"];
+const hasPass = () => !!S.settings.passHash;
+const unlocked = () => !hasPass() || S.unlockedHash === S.settings.passHash;
+const isLockedTab = (t) => LOCKED.includes(t) && !unlocked();
+async function hashPass(code, salt) { const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + ":" + code)); return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join(""); }
+const LOCK_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M4 7V5a4 4 0 1 1 8 0v2h1v8H3V7h1zm2 0h4V5a2 2 0 1 0-4 0v2z"/></svg>`;
 const lname = (id) => `<span class="lname" style="--lc:${locColor(id)}">${esc(locName(id))}</span>`;
 const qtyAt = (it, l) => +(it.stock?.[l] ?? 0);
 const minAt = (it, l) => +(it.min?.[l] ?? 0);
@@ -494,15 +538,62 @@ function render() {
   $("#brand").textContent = S.settings.name || "Stock";
   if (S.loc !== "all" && S.locs.length && !locById(S.loc)) S.loc = "all";
   $("#chips").innerHTML = [`<button class="chip" data-act="loc" data-id="all" aria-pressed="${S.loc === "all"}">All locations</button>`]
-    .concat(S.locs.map((l) => `<button class="chip" data-act="loc" data-id="${esc(l.id)}" aria-pressed="${S.loc === l.id}"><span class="dot" style="background:${locColor(l.id)}"></span>${esc(l.name)}</button>`)).join("");
+    .concat(S.locs.map((l) => `<button class="chip loc" style="--lc:${locColor(l.id)}" data-act="loc" data-id="${esc(l.id)}" aria-pressed="${S.loc === l.id}"><span class="dot"></span>${esc(l.name)}</button>`)).join("");
+  document.querySelector("header.top").style.setProperty("--hdr", S.loc === "all" ? "var(--line)" : locColor(S.loc));
   const lowN = lowList(visibleLocs()).length;
-  $("#tabs").innerHTML = TABS.map(([k, v]) => `<button class="tab" role="tab" data-act="tab" data-id="${k}" aria-selected="${S.tab === k}">${v}${k === "reorder" && lowN ? `<span class="count">${lowN}</span>` : ""}</button>`).join("");
+  $("#tabs").innerHTML = TABS.map(([k, v]) => `<button class="tab" role="tab" data-act="tab" data-id="${k}" aria-selected="${S.tab === k}">${v}${LOCKED.includes(k) && !unlocked() ? LOCK_SVG : ""}${k === "reorder" && lowN ? `<span class="count">${lowN}</span>` : ""}</button>`).join("")
+    + (hasPass() && unlocked() ? `<button class="tab lockbtn" data-act="lock">Lock${LOCK_SVG}</button>` : "");
   $("#fab").hidden = !(S.status === "ready" && S.canWrite && S.items.length);
   const m = $("#main");
   if (S.status === "nodb") m.innerHTML = `<div class="state"><h2>Sign in to see your stock</h2><p>Open this page from claude.ai while signed in. Stock is saved there and shared with your team.</p></div>`;
   else if (S.status === "loading" || !S.got.locs || !S.got.items) m.innerHTML = `<div class="state">Loading your stock…</div>`;
-  else m.innerHTML = ({ overview: vOverview, stock: vStock, history: vHistory, reorder: vReorder, reports: vReports, settings: vSettings }[S.tab] || vOverview)();
+  else if (isLockedTab(S.tab)) m.innerHTML = locBand() + vLock();
+  else m.innerHTML = (S.tab !== "settings" ? locBand() : "") + ({ overview: vOverview, dashboard: vDashboard, stock: vStock, history: vHistory, reorder: vReorder, reports: vReports, settings: vSettings }[S.tab] || vOverview)();
   if (keep) { const el = document.getElementById(keep.id); if (el && el !== document.activeElement) { el.focus(); try { el.setSelectionRange(keep.s, keep.e); } catch (e) {} } }
+}
+
+function locBand() {
+  if (S.loc === "all" || !locById(S.loc)) return "";
+  const l = locById(S.loc);
+  return `<div class="loc-band" style="--lc:${locColor(l.id)}"><span class="sw"></span><div>Showing <b>${esc(l.name)}</b> <span class="muted small">${esc(KINDS[l.kind] || "")}</span></div><button class="btn sm" style="margin-left:auto" data-act="loc" data-id="all">Show all locations</button></div>`;
+}
+function vLock() {
+  const name = (TABS.find(([k]) => k === S.tab) || [, ""])[1];
+  return `<section class="panel lock"><h2>${esc(name)} is private</h2><p class="muted small" style="margin:0">Enter the passcode to see costs, totals and reports. You can still record stock on the Stock tab without it.</p>
+  <form id="unlockForm" class="form"><input id="passIn" type="password" inputmode="numeric" autocomplete="off" aria-label="Passcode" placeholder="••••"><div id="passErr" class="err"></div><button class="btn primary" style="padding:11px">Unlock</button></form>
+  <button class="btn" data-act="tab" data-id="stock">Go to Stock</button></section>`;
+}
+const bar = (label, v, max, color, right) => `<div class="hbar"><div class="small">${label}</div><div class="bar" style="--lc:${color}"><span style="width:${max > 0 ? Math.max(1, (v / max) * 100) : 0}%"></span></div><div class="num small">${right}</div></div>`;
+function vDashboard() {
+  const locs = S.loc === "all" ? S.locs : S.locs.filter((l) => l.id === S.loc); const ids = locs.map((l) => l.id);
+  let total = 0, low = 0, out = 0; const byLoc = {}, health = {}, byCat = {}, rows = [];
+  for (const it of S.items) {
+    let iv = 0, iq = 0, any = false, worst = "ok";
+    for (const l of ids) if (stockedAt(it, l)) {
+      any = true; const q = qtyAt(it, l), v = Math.max(0, q) * (+it.cost || 0); iv += v; iq += q; byLoc[l] = (byLoc[l] || 0) + v;
+      const s = statusOf(it, l); (health[l] ||= { ok: 0, low: 0, out: 0 })[s]++; if (s === "low") low++; if (s === "out") out++;
+      if (s === "out" || (s === "low" && worst === "ok")) worst = s;
+    }
+    if (!any) continue; total += iv; const c = it.category || "Other"; byCat[c] = (byCat[c] || 0) + iv; rows.push({ it, iv, iq, worst });
+  }
+  if (!rows.length) return `<section class="panel"><div class="state"><h2>Nothing to summarise yet</h2><p>Add items on the Stock tab and they will appear here.</p></div></section>`;
+  const maxLoc = Math.max(0, ...Object.values(byLoc)); const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]); const maxCat = Math.max(0, ...cats.map((c) => c[1]));
+  const top = [...rows].sort((a, b) => b.iv - a.iv).slice(0, 8); const maxTop = top[0]?.iv || 0;
+  const kpis = `<section class="kpis"><div class="kpi"><div class="k">Stock value</div><div class="v">${money(total)}</div></div><div class="kpi"><div class="k">Items</div><div class="v">${rows.length}</div></div><div class="kpi"><div class="k">Running low</div><div class="v" style="color:var(--warn)">${low}</div></div><div class="kpi"><div class="k">Out of stock</div><div class="v" style="color:var(--bad)">${out}</div></div></section>`;
+  const locPanel = `<section class="panel"><div class="panel-h"><h2>${S.loc === "all" ? "By location" : "Stock health"}</h2></div><div class="panel-b">
+    ${S.loc === "all" ? locs.map((l) => bar(lname(l.id), byLoc[l.id] || 0, maxLoc, locColor(l.id), money(byLoc[l.id] || 0))).join("") : ""}
+    <h3 style="margin:12px 0 6px">Items OK, low and out</h3>
+    ${locs.map((l) => { const h = health[l.id] || { ok: 0, low: 0, out: 0 }; const n = h.ok + h.low + h.out || 1; return `<div class="hbar"><div class="small">${lname(l.id)}</div><div class="stack"><span style="width:${(h.ok / n) * 100}%;background:var(--ok)"></span><span style="width:${(h.low / n) * 100}%;background:var(--warn)"></span><span style="width:${(h.out / n) * 100}%;background:var(--bad)"></span></div><div class="num small">${h.ok}/${h.low}/${h.out}</div></div>`; }).join("")}
+    <div class="legend" style="margin-top:6px"><span><i style="background:var(--ok)"></i>OK</span><span><i style="background:var(--warn)"></i>Low</span><span><i style="background:var(--bad)"></i>Out</span></div></div></section>`;
+  const catPanel = `<section class="panel"><div class="panel-h"><h2>Value by category</h2></div><div class="panel-b">${cats.map(([c, v]) => bar(esc(c), v, maxCat, "var(--accent)", money(v))).join("")}</div></section>`;
+  const topPanel = `<section class="panel"><div class="panel-h"><h2>Most valuable items</h2></div><div class="panel-b">${top.map((r) => bar(`<a href="#" data-act="item" data-id="${esc(r.it.id)}" style="color:inherit">${esc(r.it.name)}</a>`, r.iv, maxTop, "var(--accent)", money(r.iv))).join("")}</div></section>`;
+  const byC = {}; for (const r of rows) (byC[r.it.category || "Other"] ||= []).push(r);
+  const list = `<section class="panel"><div class="panel-h"><div><h2>All stock</h2><div class="small muted">${rows.length} items${S.loc === "all" ? " across " + locs.length + " locations" : ""}</div></div><button class="btn" data-act="export-stock">Download CSV</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Item</th>${locs.map((l) => `<th class="n loc-col" style="--lc:${locColor(l.id)}">${esc(l.name)}</th>`).join("")}${locs.length > 1 ? `<th class="n">Total</th>` : ""}<th class="n">Value</th><th>Status</th></tr></thead><tbody>
+    ${Object.keys(byC).sort().map((c) => { const rs = byC[c].sort((a, b) => a.it.name.localeCompare(b.it.name)); const sub = rs.reduce((s, r) => s + r.iv, 0);
+      return `<tr class="cat-row"><td colspan="${locs.length + (locs.length > 1 ? 2 : 1)}">${esc(c)}</td><td class="n">${money(sub)}</td><td></td></tr>` + rs.map((r) => `<tr class="click" data-act="item" data-id="${esc(r.it.id)}"><td><b>${esc(r.it.name)}</b> <span class="muted small">${esc(r.it.unit)}</span></td>${locs.map((l) => { if (!stockedAt(r.it, l.id)) return `<td class="n cell-na loc-col" style="--lc:${locColor(l.id)}">–</td>`; const s = statusOf(r.it, l.id); return `<td class="n loc-col ${s !== "ok" ? "cell-" + s : ""}" style="--lc:${locColor(l.id)}">${num(qtyAt(r.it, l.id))}</td>`; }).join("")}${locs.length > 1 ? `<td class="n">${num(r.iq)}</td>` : ""}<td class="n">${money(r.iv)}</td><td><span class="pill ${r.worst}">${STATUS_LABEL[r.worst]}</span></td></tr>`).join(""); }).join("")}
+    </tbody><tfoot><tr><td colspan="${locs.length + (locs.length > 1 ? 2 : 1)}">Total stock value</td><td class="n">${money(total)}</td><td></td></tr></tfoot></table></div></section>`;
+  return kpis + `<div class="split">${locPanel}${catPanel}</div>` + topPanel + list;
 }
 
 function exampleBanner() {
@@ -512,7 +603,7 @@ function exampleBanner() {
 
 function vOverview() {
   if (!S.locs.length) return `<div class="state"><h2>Set up your locations</h2><p>Start with your bakery, your two restaurant branches and a shared store. You can rename them later in Settings.</p>${S.canWrite ? `<button class="btn primary" data-act="default-locs">Create my locations</button>` : ""}</div>`;
-  const cards = S.locs.map((l) => {
+  const cards = (S.loc === "all" ? S.locs : S.locs.filter((l) => l.id === S.loc)).map((l) => {
     let val = 0, n = 0, low = 0, out = 0;
     for (const it of S.items) if (stockedAt(it, l.id)) { n++; val += Math.max(0, qtyAt(it, l.id)) * (+it.cost || 0); const s = statusOf(it, l.id); if (s === "low") low++; if (s === "out") out++; }
     return `<button class="loc-card" style="--lc:${locColor(l.id)}" data-act="open-loc" data-id="${esc(l.id)}">
@@ -559,18 +650,18 @@ function vStock() {
   if (!items.length) body = `<div class="empty">${S.items.length ? "No items match." : "No items yet. Add your first item."}</div>`;
   else if (S.loc === "all") {
     const total = { v: 0 };
-    body = `<div class="table-wrap"><table><thead><tr><th>Item</th>${S.locs.map((l) => `<th class="n"><span class="lname" style="--lc:${locColor(l.id)}">${esc(l.name)}</span></th>`).join("")}<th class="n">Total</th><th class="n">Value</th></tr></thead><tbody>
-    ${items.map((it) => { let t = 0; const cells = S.locs.map((l) => { if (!stockedAt(it, l.id)) return `<td class="n cell-na">–</td>`; const q = qtyAt(it, l.id); t += q; const s = statusOf(it, l.id); return `<td class="n ${s !== "ok" ? "cell-" + s : ""}" title="${STATUS_LABEL[s]}">${num(q)}</td>`; }).join("");
+    body = `<div class="table-wrap"><table><thead><tr><th>Item</th>${S.locs.map((l) => `<th class="n loc-col" style="--lc:${locColor(l.id)}">${esc(l.name)}</th>`).join("")}<th class="n">Total</th>${unlocked() ? `<th class="n">Value</th>` : ""}</tr></thead><tbody>
+    ${items.map((it) => { let t = 0; const cells = S.locs.map((l) => { if (!stockedAt(it, l.id)) return `<td class="n cell-na loc-col" style="--lc:${locColor(l.id)}">–</td>`; const q = qtyAt(it, l.id); t += q; const s = statusOf(it, l.id); return `<td class="n loc-col ${s !== "ok" ? "cell-" + s : ""}" style="--lc:${locColor(l.id)}" title="${STATUS_LABEL[s]}">${num(q)}</td>`; }).join("");
       const v = Math.max(0, t) * (+it.cost || 0); total.v += v;
-      return `<tr class="click" data-act="item" data-id="${esc(it.id)}"><td><b>${esc(it.name)}</b> <span class="muted small">${esc(it.unit)}</span><div class="small muted">${esc(it.category || "")}</div></td>${cells}<td class="n">${num(t)}</td><td class="n">${money(v)}</td></tr>`; }).join("")}
-    </tbody><tfoot><tr><td colspan="${S.locs.length + 2}">Total stock value</td><td class="n">${money(total.v)}</td></tr></tfoot></table></div>`;
+      return `<tr class="click" data-act="item" data-id="${esc(it.id)}"><td><b>${esc(it.name)}</b> <span class="muted small">${esc(it.unit)}</span><div class="small muted">${esc(it.category || "")}</div></td>${cells}<td class="n">${num(t)}</td>${unlocked() ? `<td class="n">${money(v)}</td>` : ""}</tr>`; }).join("")}
+    </tbody>${unlocked() ? `<tfoot><tr><td colspan="${S.locs.length + 2}">Total stock value</td><td class="n">${money(total.v)}</td></tr></tfoot>` : ""}</table></div>`;
   } else {
     const l = S.loc; const isShared = locById(l)?.kind === "shared";
-    body = `<div class="rows">${items.map((it) => { const s = statusOf(it, l); return `<div class="row click" data-act="item" data-id="${esc(it.id)}">
+    body = `<div class="rows">${items.map((it) => { const s = statusOf(it, l); return `<div class="row click lc" style="--lc:${locColor(l)}" data-act="item" data-id="${esc(it.id)}">
       <div class="main"><div class="title">${esc(it.name)}</div><div class="sub">${esc([it.category, it.supplier].filter(Boolean).join(" · ")) || "&nbsp;"}</div></div>
       <div class="qty"><b>${num(qtyAt(it, l))}</b> <span class="muted">${esc(it.unit)}</span><div class="small muted">min ${num(minAt(it, l))}</div></div>
       <span class="pill ${s}">${STATUS_LABEL[s]}</span>
-      ${S.canWrite ? `<div class="acts"><button class="btn sm" data-act="record" data-type="use" data-item="${esc(it.id)}" data-loc="${esc(l)}">Use</button><button class="btn sm" data-act="record" data-type="in" data-item="${esc(it.id)}" data-loc="${esc(l)}">Receive</button>${isShared ? `<button class="btn sm" data-act="record" data-type="transfer" data-item="${esc(it.id)}" data-loc="${esc(l)}">Send to branch</button>` : ""}</div>` : ""}
+      ${S.canWrite ? `<div class="acts"><button class="btn sm tsoft tc-use" data-act="record" data-type="use" data-item="${esc(it.id)}" data-loc="${esc(l)}">− Use</button><button class="btn sm tsoft tc-in" data-act="record" data-type="in" data-item="${esc(it.id)}" data-loc="${esc(l)}">+ Receive</button>${isShared ? `<button class="btn sm tsoft tc-transfer" data-act="record" data-type="transfer" data-item="${esc(it.id)}" data-loc="${esc(l)}">→ Send to branch</button>` : ""}</div>` : ""}
     </div>`; }).join("")}</div>`;
   }
   return `${exampleBanner()}<section class="panel">${head}<div class="panel-b">${tools}</div>${body}</section>`;
@@ -589,7 +680,7 @@ function moveRow(m) {
   if (m.forLoc) where += ` <span class="muted">for</span> ${lname(m.forLoc)}`;
   const qtyTxt = m.type === "count" ? `${num(m.qty)} <span class="muted">${esc(m.unit)}</span><div class="small muted">${(m.delta?.[m.loc] ?? 0) >= 0 ? "+" : "−"}${num(Math.abs(m.delta?.[m.loc] ?? 0))}</div>` : `${sign}${num(m.qty)} <span class="muted">${esc(m.unit)}</span>`;
   const by = m.by && S.names[m.by] ? ` · ${esc(S.names[m.by])}` : "";
-  return `<div class="row"><span class="pill t-${esc(m.type)}">${esc(t.verb)}</span><div class="main"><div class="title">${esc(m.itemName)}</div><div class="sub">${where} · ${fmtTime(m.at)}${by}${m.note ? " · " + esc(m.note) : ""}</div></div><div class="qty"><b class="num" style="font-size:1rem">${qtyTxt}</b></div>${S.canWrite && S.tab === "history" && !m._noUndo ? `<button class="btn sm" data-act="undo" data-id="${esc(m.id)}" title="Reverse this entry">Undo</button>` : ""}</div>`;
+  return `<div class="row"><span class="pill tpill tc-${esc(m.type)}">${esc((t.glyph || "") + " " + t.verb)}</span><div class="main"><div class="title">${esc(m.itemName)}</div><div class="sub">${where} · ${fmtTime(m.at)}${by}${m.note ? " · " + esc(m.note) : ""}</div></div><div class="qty"><b class="num" style="font-size:1rem">${qtyTxt}</b></div>${S.canWrite && S.tab === "history" && !m._noUndo ? `<button class="btn sm" data-act="undo" data-id="${esc(m.id)}" title="Reverse this entry">Undo</button>` : ""}</div>`;
 }
 function vHistory() {
   const list = filteredMoves();
@@ -705,10 +796,17 @@ function vSettings() {
     <div class="two"><div class="field"><label for="setName">Business name</label><input id="setName" value="${esc(S.settings.name)}" placeholder="e.g. Golden Crust" ${ro}></div>
     <div class="field"><label for="setCur">Currency symbol</label><input id="setCur" value="${esc(S.settings.currency)}" maxlength="5" ${ro}></div></div>
     ${S.canWrite ? `<div><button class="btn primary" data-act="save-settings">Save</button></div>` : ""}</div></section>
+  <section class="panel"><div class="panel-h"><div><h2>Passcode</h2><div class="small muted">With a passcode, Overview, Dashboard, Reports and Settings stay locked, and costs and stock values are hidden everywhere else. Staff can still record stock without it.</div></div>${hasPass() ? `<span class="pill ok">On</span>` : `<span class="pill low">Off</span>`}</div>
+    ${S.canWrite ? `<div class="panel-b form"><div class="two"><div class="field"><label for="pass1">${hasPass() ? "New passcode" : "Passcode"}</label><input id="pass1" type="password" inputmode="numeric" autocomplete="new-password" placeholder="At least 4 characters"></div>
+    <div class="field"><label for="pass2">Type it again</label><input id="pass2" type="password" inputmode="numeric" autocomplete="new-password"></div></div>
+    <div id="passMsg" class="err"></div>
+    <div class="toolbar"><button class="btn primary" data-act="set-pass">${hasPass() ? "Change passcode" : "Set passcode"}</button>${hasPass() ? `<button class="btn danger" data-act="clear-pass">Turn off passcode</button>` : ""}</div>
+    <div class="small muted">The passcode keeps these pages private inside the app. Anyone you give the data access key to could still read the raw data, so only share that key with people you trust.</div></div>` : ""}</section>
   <section class="panel"><div class="panel-h"><div><h2>Locations</h2><div class="small muted">Each location keeps its own stock. A <b>Shared store</b> holds stock that both restaurant branches draw from.</div></div>${S.canWrite ? `<button class="btn" data-act="add-loc">+ Add location</button>` : ""}</div>
     <div class="rows">${S.locs.map((l) => `<div class="row"><span class="dot" style="width:12px;height:12px;border-radius:50%;background:${locColor(l.id)}"></span>
       <div class="main" style="display:flex;gap:8px;flex-wrap:wrap"><input class="btn" style="flex:1 1 180px;text-align:left;font-weight:400" id="ln-${esc(l.id)}" value="${esc(l.name)}" aria-label="Location name" ${ro}>
-      <select class="btn" id="lk-${esc(l.id)}" aria-label="Kind" ${ro}>${Object.entries(KINDS).map(([k, v]) => `<option value="${k}" ${l.kind === k ? "selected" : ""}>${v}</option>`).join("")}</select></div>
+      <select class="btn" id="lk-${esc(l.id)}" aria-label="Kind" ${ro}>${Object.entries(KINDS).map(([k, v]) => `<option value="${k}" ${l.kind === k ? "selected" : ""}>${v}</option>`).join("")}</select>
+      <select class="btn" id="lc-${esc(l.id)}" aria-label="Color" style="border-left:6px solid ${locColor(l.id)}" ${ro}>${COLORS.map((c, i) => `<option value="${i}" ${locColorIdx(l.id) === i ? "selected" : ""}>${c}</option>`).join("")}</select></div>
       ${S.canWrite ? `<div class="acts"><button class="btn sm" data-act="save-loc" data-id="${esc(l.id)}">Save</button><button class="btn sm danger" data-act="del-loc" data-id="${esc(l.id)}">Remove</button></div>` : ""}</div>`).join("")}</div></section>
   ${window.__stockSignOut ? `<section class="panel"><div class="panel-h"><div><h2>Account</h2><div class="small muted">Signed in as ${esc(window.__stockEmail || "")}</div></div><button class="btn" data-act="sign-out">Sign out</button></div></section>` : ""}
   <section class="panel"><div class="panel-h"><h2>How to use</h2></div><div class="panel-b small" style="display:grid;gap:6px;max-width:70ch">
@@ -727,13 +825,17 @@ const sheetHead = (title, sub) => `<div class="sheet-h"><div><h2>${title}</h2>${
 
 const R = { type: "use", item: "", loc: "", to: "", forLoc: "" };
 function openRecord(opts = {}) {
-  R.type = opts.type || "use";
+  R.type = opts.type || "";
   R.item = opts.item || "";
   R.loc = opts.loc || (S.loc !== "all" ? S.loc : (S.locs[0]?.id || ""));
   R.to = opts.to || "";
   R.forLoc = "";
   openModal(`<div id="recBody"></div>`);
-  drawRecord();
+  R.type ? drawRecord() : drawChooser();
+}
+function drawChooser() {
+  $("#recBody").innerHTML = `${sheetHead("What happened?", "Pick the one that matches.")}
+  <div class="tchoice">${Object.entries(TYPES).map(([k, v]) => `<button type="button" class="tcard tc-${k}" data-act="rpick" data-id="${k}"><span class="tglyph">${v.glyph}</span><span><b>${v.label}</b><span>${v.short}</span><div class="ex">${v.help}</div></span></button>`).join("")}</div>`;
 }
 function drawRecord() {
   const it = itemById(R.item);
@@ -743,10 +845,10 @@ function drawRecord() {
   const cats = categories(); const byCat = (c) => S.items.filter((i) => (i.category || "") === c).sort(sortItems);
   const itemOpts = `<option value="">Choose an item…</option>` + [...cats, ""].map((c) => { const list = byCat(c); if (!list.length) return ""; const o = list.map((i) => `<option value="${esc(i.id)}" ${i.id === R.item ? "selected" : ""}>${esc(i.name)} (${esc(i.unit)})</option>`).join(""); return c ? `<optgroup label="${esc(c)}">${o}</optgroup>` : o; }).join("");
   const showFor = isSharedFrom && (R.type === "use" || R.type === "waste");
+  const T = TYPES[R.type];
   $("#recBody").innerHTML = `${sheetHead("Record stock")}
-  <div class="seg" role="group" aria-label="What happened">${Object.entries(TYPES).map(([k, v]) => `<button type="button" data-act="rtype" data-id="${k}" aria-pressed="${R.type === k}">${v.label}</button>`).join("")}</div>
-  <div class="hint">${TYPES[R.type].help}</div>
-  <form class="form" id="recForm">
+  <div class="tbanner tc-${R.type}"><span class="tglyph">${T.glyph}</span><div class="t"><b>${T.label}</b> <span class="small">${T.short}</span><div class="small muted">${T.help}</div></div><button type="button" class="btn sm" data-act="rchange">Change</button></div>
+  <form class="form tc-${R.type}" id="recForm">
     <div class="field"><label for="rItem">Item</label><select id="rItem" required>${itemOpts}</select></div>
     <div class="${R.type === "transfer" ? "two" : ""}">
       <div class="field"><label for="rLoc">${R.type === "transfer" ? "From" : "Location"}</label><select id="rLoc">${locOpts(R.loc)}</select></div>
@@ -755,11 +857,11 @@ function drawRecord() {
     ${showFor ? `<div class="field"><label for="rFor">Used by which branch?</label><select id="rFor" required><option value="">Choose a branch…</option>${restaurantLocs().map((b) => `<option value="${esc(b.id)}" ${R.forLoc === b.id ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></div>` : ""}
     <div class="${R.type === "in" ? "two" : ""}">
       <div class="field"><label for="rQty">${R.type === "count" ? "Quantity on the shelf" : "Quantity"}</label><div class="unit-in"><input id="rQty" type="number" inputmode="decimal" step="any" min="0" required autofocus><span>${esc(it?.unit || "unit")}</span></div></div>
-      ${R.type === "in" ? `<div class="field"><label for="rCost">Price per ${esc(it?.unit || "unit")} (optional)</label><input id="rCost" type="number" inputmode="decimal" step="any" min="0" placeholder="${it ? "Now " + (+it.cost || 0) : ""}"></div>` : ""}
+      ${R.type === "in" ? `<div class="field"><label for="rCost">Price per ${esc(it?.unit || "unit")} (optional)</label><input id="rCost" type="number" inputmode="decimal" step="any" min="0" placeholder="${it && unlocked() ? "Now " + (+it.cost || 0) : ""}"></div>` : ""}
     </div>
     <div class="field"><label for="rNote">Note (optional)</label><input id="rNote" placeholder="${R.type === "in" ? "Invoice number, supplier…" : R.type === "waste" ? "Reason, e.g. expired" : ""}"></div>
     <div id="rHint"></div><div id="rErr" class="err"></div>
-    <div class="sheet-f"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary" id="rSave">${TYPES[R.type].label === "Count" ? "Save count" : "Save " + TYPES[R.type].label.toLowerCase()}</button></div>
+    <div class="sheet-f"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn tbtn" id="rSave">${T.glyph} Save ${T.label.toLowerCase()}</button></div>
   </form>`;
   if (!it && !R.item) { const s = $("#rItem"); setTimeout(() => s && s.focus(), 0); }
   recHint();
@@ -775,7 +877,14 @@ function recHint() {
     if (R.type === "count") { const d = q - have; msg += ` Difference: <b>${d >= 0 ? "+" : "−"}${num(Math.abs(d))}</b>.`; }
   }
   if (!stockedAt(it, R.loc) && R.type !== "in" && R.type !== "count") { warn = true; msg += ` This item is not usually kept at ${esc(locName(R.loc))}.`; }
-  h.innerHTML = `<div class="hint ${warn ? "warn" : ""}">${msg}</div>`;
+  let sum = "";
+  if (!isNaN(q) && q >= 0) {
+    const T = TYPES[R.type]; const qty = `<span class="q">${R.type === "count" ? "" : T.glyph}${num(q)} ${esc(it.unit)}</span>`; const at = `<b>${esc(locName(R.loc))}</b>`;
+    const what = { in: `${qty} of ${esc(it.name)} coming <b>into</b> ${at}`, use: `${qty} of ${esc(it.name)} <b>used</b> at ${at}`, waste: `${qty} of ${esc(it.name)} <b>thrown away</b> at ${at}`,
+      transfer: `${qty} of ${esc(it.name)} <b>moved</b> from ${at} to <b>${esc(locName(R.to))}</b>`, count: `${esc(it.name)} at ${at}: the shelf has ${qty}` }[R.type];
+    sum = `<div class="summary-line">${what}${R.forLoc && $("#rFor") ? ` for <b>${esc(locName(R.forLoc))}</b>` : ""}</div>`;
+  }
+  h.innerHTML = `${sum}<div class="hint ${warn ? "warn" : ""}" style="margin-top:8px">${msg}</div>`;
 }
 
 async function applyMove(m) {
@@ -823,9 +932,9 @@ function itemDetail(id) {
   const it = itemById(id); if (!it) return;
   const ms = S.moves.filter((m) => m.itemId === id).slice(0, 12);
   const locs = S.locs.filter((l) => stockedAt(it, l.id) || qtyAt(it, l.id) !== 0);
-  openModal(`${sheetHead(esc(it.name), esc([it.category, it.supplier, `${money(it.cost)} per ${it.unit}`].filter(Boolean).join(" · ")))}
-  <div class="rows panel">${locs.length ? locs.map((l) => { const s = statusOf(it, l.id); return `<div class="row"><div class="main">${lname(l.id)}</div><div class="qty"><b>${num(qtyAt(it, l.id))}</b> <span class="muted">${esc(it.unit)}</span><div class="small muted">min ${num(minAt(it, l.id))}</div></div><span class="pill ${s}">${STATUS_LABEL[s]}</span></div>`; }).join("") : `<div class="empty">Not kept at any location yet.</div>`}</div>
-  ${S.canWrite ? `<div class="toolbar">${Object.entries(TYPES).map(([k, v]) => `<button class="btn ${k === "use" ? "primary" : ""}" data-act="record" data-type="${k}" data-item="${esc(id)}">${v.label}</button>`).join("")}<span style="flex:1"></span><button class="btn" data-act="edit-item" data-id="${esc(id)}">Edit item</button></div>` : ""}
+  openModal(`${sheetHead(esc(it.name), esc([it.category, it.supplier, unlocked() ? `${money(it.cost)} per ${it.unit}` : ""].filter(Boolean).join(" · ")))}
+  <div class="rows panel">${locs.length ? locs.map((l) => { const s = statusOf(it, l.id); return `<div class="row lc" style="--lc:${locColor(l.id)}"><div class="main">${lname(l.id)}</div><div class="qty"><b>${num(qtyAt(it, l.id))}</b> <span class="muted">${esc(it.unit)}</span><div class="small muted">min ${num(minAt(it, l.id))}</div></div><span class="pill ${s}">${STATUS_LABEL[s]}</span></div>`; }).join("") : `<div class="empty">Not kept at any location yet.</div>`}</div>
+  ${S.canWrite ? `<div class="toolbar">${Object.entries(TYPES).map(([k, v]) => `<button class="btn tsoft tc-${k}" data-act="record" data-type="${k}" data-item="${esc(id)}">${v.glyph} ${v.label}</button>`).join("")}<span style="flex:1"></span><button class="btn" data-act="edit-item" data-id="${esc(id)}">Edit item</button></div>` : ""}
   <h3>Recent</h3><div class="rows panel">${ms.length ? ms.map(moveRow).join("") : `<div class="empty">No history yet.</div>`}</div>`, true);
 }
 
@@ -837,7 +946,7 @@ function itemForm(id) {
     <div class="field"><label for="iName">Name</label><input id="iName" required value="${esc(it.name)}" placeholder="e.g. Bread flour" autofocus></div>
     <div class="two"><div class="field"><label for="iCat">Category</label><input id="iCat" list="catList" value="${esc(it.category)}" placeholder="e.g. Dry goods"><datalist id="catList">${[...new Set([...categories(), "Dry goods", "Dairy", "Meat & fish", "Produce", "Frozen", "Drinks", "Packaging", "Cleaning"])].map((c) => `<option value="${esc(c)}">`).join("")}</datalist></div>
     <div class="field"><label for="iUnit">Unit</label><select id="iUnit">${units.map((u) => `<option ${u === it.unit ? "selected" : ""}>${esc(u)}</option>`).join("")}</select></div></div>
-    <div class="two"><div class="field"><label for="iCost">Cost per unit (${esc(S.settings.currency)})</label><input id="iCost" type="number" step="any" min="0" inputmode="decimal" value="${esc(it.cost)}"></div>
+    <div class="two">${unlocked() ? `<div class="field"><label for="iCost">Cost per unit (${esc(S.settings.currency)})</label><input id="iCost" type="number" step="any" min="0" inputmode="decimal" value="${esc(it.cost)}"></div>` : ""}
     <div class="field"><label for="iSup">Supplier</label><input id="iSup" value="${esc(it.supplier)}" placeholder="Who you order from"></div></div>
     <div class="field"><span class="lab">Where it is kept</span><div class="table-wrap"><table class="loc-table"><thead><tr><th>Keep here</th><th>Location</th><th class="n">Minimum</th>${id ? "" : `<th class="n">Now on shelf</th>`}</tr></thead><tbody>
     ${S.locs.map((l) => `<tr><td><input type="checkbox" id="ik-${esc(l.id)}" ${stockedAt(it, l.id) ? "checked" : ""} aria-label="Keep at ${esc(l.name)}"></td><td>${lname(l.id)}</td><td class="n"><input type="number" step="any" min="0" id="im-${esc(l.id)}" value="${it.min?.[l.id] ?? ""}" placeholder="0" aria-label="Minimum at ${esc(l.name)}"></td>${id ? "" : `<td class="n"><input type="number" step="any" min="0" id="is-${esc(l.id)}" placeholder="0" aria-label="Starting quantity at ${esc(l.name)}"></td>`}</tr>`).join("")}
@@ -854,7 +963,8 @@ async function submitItem(form) {
   const locs = [], min = {}, start = {};
   for (const l of S.locs) { const k = $("#ik-" + CSS.escape(l.id)); const mv = parseFloat($("#im-" + CSS.escape(l.id)).value); const sEl = $("#is-" + CSS.escape(l.id)); const sv = sEl ? parseFloat(sEl.value) : NaN;
     if (k.checked || (!isNaN(sv) && sv > 0)) locs.push(l.id); if (!isNaN(mv)) min[l.id] = mv; if (!isNaN(sv) && sv > 0) start[l.id] = sv; }
-  const body = { name, category: $("#iCat").value.trim(), unit: $("#iUnit").value, cost: parseFloat($("#iCost").value) || 0, supplier: $("#iSup").value.trim(), locs, min };
+  const body = { name, category: $("#iCat").value.trim(), unit: $("#iUnit").value, supplier: $("#iSup").value.trim(), locs, min };
+  if ($("#iCost")) body.cost = parseFloat($("#iCost").value) || 0; else if (!id) body.cost = 0;
   $("#iSave").disabled = true;
   try {
     if (id) { const old = itemById(id); body.min = { ...Object.fromEntries(Object.keys(old.min || {}).map((k) => [k, 0])), ...min }; await S.db.doc("items/" + id).update(body); }
@@ -904,8 +1014,9 @@ async function download(filename, rows) {
   try { await dl.save({ filename, data: "﻿" + csv(rows) }); } catch (e) { if (e?.code !== "declined") toast("Could not download the file."); }
 }
 function exportStock() {
-  const head = ["Item", "Category", "Unit", "Cost per unit", "Supplier", ...S.locs.flatMap((l) => [l.name, l.name + " min"]), "Total", "Value"];
-  const rows = filteredItems().map((it) => { let t = 0; const cells = S.locs.flatMap((l) => { const q = stockedAt(it, l.id) ? qtyAt(it, l.id) : ""; if (q !== "") t += q; return [q, stockedAt(it, l.id) ? minAt(it, l.id) : ""]; }); return [it.name, it.category, it.unit, it.cost, it.supplier, ...cells, r3(t), (Math.max(0, t) * (+it.cost || 0)).toFixed(2)]; });
+  const pv = unlocked();
+  const head = ["Item", "Category", "Unit", ...(pv ? ["Cost per unit"] : []), "Supplier", ...S.locs.flatMap((l) => [l.name, l.name + " min"]), "Total", ...(pv ? ["Value"] : [])];
+  const rows = filteredItems().map((it) => { let t = 0; const cells = S.locs.flatMap((l) => { const q = stockedAt(it, l.id) ? qtyAt(it, l.id) : ""; if (q !== "") t += q; return [q, stockedAt(it, l.id) ? minAt(it, l.id) : ""]; }); return [it.name, it.category, it.unit, ...(pv ? [it.cost] : []), it.supplier, ...cells, r3(t), ...(pv ? [(Math.max(0, t) * (+it.cost || 0)).toFixed(2)] : [])]; });
   download(`stock-${isoDay(new Date())}.csv`, [head, ...rows]);
 }
 function exportReorder() { const rows = [["Supplier", "Item", "Location", "Have", "Minimum", "Order", "Unit"]]; for (const [sup, list] of reorderGroups()) for (const r of list) rows.push([sup, r.it.name, locName(r.l), r.have, r.min, r.need, r.it.unit]); download(`reorder-${isoDay(new Date())}.csv`, rows); }
@@ -919,6 +1030,17 @@ async function copyReorder() {
   catch (e) { openModal(`${sheetHead("Reorder list")}<textarea id="copyTxt" rows="14" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface)">${esc(text)}</textarea><div class="small muted">Select the text and copy it.</div>`); const t = $("#copyTxt"); t.focus(); t.select(); }
 }
 
+async function saveSettings(changes) {
+  const cur = { name: S.settings.name || "", currency: S.settings.currency || "$", passHash: S.settings.passHash || "", passSalt: S.settings.passSalt || "" };
+  await S.db.doc("settings/main").set({ ...cur, ...changes });
+}
+async function tryUnlock() {
+  const v = $("#passIn").value; const err = $("#passErr"); err.textContent = "";
+  const h = await hashPass(v, S.settings.passSalt || "");
+  if (h !== S.settings.passHash) { err.textContent = "That passcode is not right. Try again."; $("#passIn").select(); return; }
+  S.unlockedHash = h; try { sessionStorage.setItem("stock.unlock", h); } catch (e) {} render();
+}
+
 /* ---------- Events ---------- */
 document.addEventListener("click", async (ev) => {
   const el = ev.target.closest("[data-act]"); if (!el) return;
@@ -930,6 +1052,15 @@ document.addEventListener("click", async (ev) => {
   if (act === "open-loc") { S.loc = id; S.tab = "stock"; try { localStorage.setItem("stock.loc", id); } catch (e) {} return render(); }
   if (act === "item") return itemDetail(id);
   if (act === "record") { ev.stopPropagation(); return openRecord({ type: el.dataset.type, item: el.dataset.item, loc: el.dataset.loc, to: el.dataset.to }); }
+  if (act === "rpick") { R.type = id; return drawRecord(); }
+  if (act === "rchange") { R.forLoc = $("#rFor")?.value || ""; return drawChooser(); }
+  if (act === "lock") { S.unlockedHash = ""; try { sessionStorage.removeItem("stock.unlock"); } catch (e) {} toast("Locked"); return render(); }
+  if (act === "set-pass") { const a = $("#pass1").value, b = $("#pass2").value, msg = $("#passMsg"); msg.textContent = "";
+    if (a.length < 4) return (msg.textContent = "Use at least 4 characters.");
+    if (a !== b) return (msg.textContent = "The two passcodes don't match.");
+    const salt = [...crypto.getRandomValues(new Uint8Array(8))].map((x) => x.toString(16).padStart(2, "0")).join(""); const h = await hashPass(a, salt);
+    try { await saveSettings({ passHash: h, passSalt: salt }); S.unlockedHash = h; try { sessionStorage.setItem("stock.unlock", h); } catch (e) {} toast("Passcode saved"); } catch (e) { msg.textContent = writeErr(e); } return; }
+  if (act === "clear-pass") { try { await saveSettings({ passHash: "", passSalt: "" }); toast("Passcode turned off"); } catch (e) { toast(writeErr(e)); } return; }
   if (act === "rtype") { R.type = id; R.forLoc = $("#rFor")?.value || ""; return drawRecord(); }
   if (act === "new-item") return itemForm();
   if (act === "edit-item") return itemForm(id);
@@ -944,8 +1075,8 @@ document.addEventListener("click", async (ev) => {
   if (act === "copy-reorder") return copyReorder();
   if (act === "clear-examples") return openModal(`${sheetHead("Remove example data?")}<div class="hint">This deletes the example items and their history. Your locations stay.</div><div id="xErr" class="err"></div><div class="sheet-f"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="clear-yes">Remove examples</button></div>`);
   if (act === "clear-yes") { el.disabled = true; try { for (const it of S.items.filter((i) => i.example)) await S.db.doc("items/" + it.id).delete(); const ms = await S.db.collection("moves").where("example", "==", true).limit(1000).get(); for (const d of ms.docs) await S.db.doc("moves/" + d.id).delete(); closeModal(); toast("Examples removed"); S.rep.data = null; } catch (e) { $("#xErr").textContent = writeErr(e); el.disabled = false; } return; }
-  if (act === "save-settings") { try { await S.db.doc("settings/main").set({ name: $("#setName").value.trim(), currency: $("#setCur").value.trim() }); toast("Saved"); } catch (e) { toast(writeErr(e)); } return; }
-  if (act === "save-loc") { const name = $("#ln-" + CSS.escape(id)).value.trim(); if (!name) return toast("Give the location a name."); try { await S.db.doc("locations/" + id).update({ name, kind: $("#lk-" + CSS.escape(id)).value }); toast("Location saved"); } catch (e) { toast(writeErr(e)); } return; }
+  if (act === "save-settings") { try { await saveSettings({ name: $("#setName").value.trim(), currency: $("#setCur").value.trim() }); toast("Saved"); } catch (e) { toast(writeErr(e)); } return; }
+  if (act === "save-loc") { const name = $("#ln-" + CSS.escape(id)).value.trim(); if (!name) return toast("Give the location a name."); try { await S.db.doc("locations/" + id).update({ name, kind: $("#lk-" + CSS.escape(id)).value, color: parseInt($("#lc-" + CSS.escape(id)).value, 10) }); toast("Location saved"); } catch (e) { toast(writeErr(e)); } return; }
   if (act === "default-locs") { el.disabled = true; try { const d = [["bakery", "Bakery", "bakery"], ["branch1", "Restaurant – Branch 1", "restaurant"], ["branch2", "Restaurant – Branch 2", "restaurant"], ["shared", "Shared Store", "shared"]];
     for (let i = 0; i < d.length; i++) await S.db.doc("locations/" + d[i][0]).set({ name: d[i][1], kind: d[i][2], order: i + 1 }); toast("Locations created"); } catch (e) { el.disabled = false; toast(writeErr(e)); } return; }
   if (act === "sign-out") { if (window.__stockSignOut) window.__stockSignOut(); return; }
@@ -968,12 +1099,13 @@ document.addEventListener("change", (ev) => {
   else if (t.id === "rItem") { R.item = t.value; const q = $("#rQty").value; const n = $("#rNote").value; R.forLoc = $("#rFor")?.value || ""; drawRecord(); $("#rQty").value = q; $("#rNote").value = n; recHint(); $("#rQty").focus(); }
   else if (t.id === "rLoc") { R.loc = t.value; const q = $("#rQty").value; R.forLoc = $("#rFor")?.value || ""; drawRecord(); $("#rQty").value = q; recHint(); }
   else if (t.id === "rTo") { R.to = t.value; recHint(); }
+  else if (t.id === "rFor") { R.forLoc = t.value; recHint(); }
   else if (t.id === "repPreset") { S.rep.preset = t.value; S.rep.data = null; render(); }
   else if (t.id === "repFrom" || t.id === "repTo") { S.rep.from = $("#repFrom").value; S.rep.to = $("#repTo").value; S.rep.data = null; render(); }
 });
 document.addEventListener("submit", (ev) => {
   ev.preventDefault(); const f = ev.target;
-  if (f.id === "recForm") submitRecord(); else if (f.id === "itemForm") submitItem(f); else if (f.id === "countForm") submitCount();
+  if (f.id === "unlockForm") tryUnlock(); else if (f.id === "recForm") submitRecord(); else if (f.id === "itemForm") submitItem(f); else if (f.id === "countForm") submitCount();
 });
 document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && $("#modal").innerHTML) closeModal(); });
 
@@ -993,7 +1125,7 @@ async function boot() {
   db.collection("locations").onSnapshot((s) => { S.locs = s.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name)); S.got.locs = true; render(); }, onErr);
   db.collection("items").onSnapshot((s) => { S.items = s.docs.map((d) => ({ id: d.id, ...d.data() })); S.got.items = true; render(); if (!$("#modal").innerHTML) return; if ($("#rHint")) recHint(); }, onErr);
   db.collection("moves").orderBy("at", "desc").limit(300).onSnapshot((s) => { S.moves = s.docs.map((d) => ({ id: d.id, ...d.data() })); S.got.moves = true; render(); resolveNames(); }, onErr);
-  db.doc("settings/main").onSnapshot((s) => { S.settings = { ...DEFAULT_SETTINGS, ...(s.data() || {}) }; render(); }, onErr);
+  db.doc("settings/main").onSnapshot((s) => { S.settings = { ...DEFAULT_SETTINGS, ...(s.data() || {}) }; if (!S.got.settings) { S.got.settings = true; if (isLockedTab(S.tab)) S.tab = "stock"; } render(); }, onErr);
 }
 boot();
 })();
