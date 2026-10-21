@@ -216,6 +216,7 @@ tr.cat-row td { background: var(--sunk); font-weight: 600; font-size: .8rem; tex
 .chart text { fill: var(--muted); font-size: 11px; font-family: var(--f-body); }
 .chart .hit { fill: transparent; cursor: crosshair; }
 .chart .hit:hover { fill: color-mix(in srgb, var(--ink) 6%, transparent); }
+#tip[hidden] { display: none; }
 #tip { position: fixed; z-index: 40; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: .82rem; box-shadow: var(--shadow); min-width: 150px; max-width: 260px; display: grid; gap: 3px; }
 #tip .r { display: flex; gap: 12px; justify-content: space-between; }
 #tip i, .series-toggle i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
@@ -231,6 +232,23 @@ tr.cat-row td { background: var(--sunk); font-weight: 600; font-size: .8rem; tex
 .pill.st-declined { background: var(--bad-soft); color: var(--bad); } .pill.st-cancelled { background: var(--sunk); color: var(--muted); }
 .banner.req-b { background: color-mix(in srgb, var(--t-transfer) 12%, var(--surface)); }
 .import-prev { max-height: 320px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+.reorder-t { table-layout: fixed; min-width: 640px; }
+.reorder-t col.c-item { width: 32%; } .reorder-t col.c-loc { width: 22%; } .reorder-t col.c-n { width: 9%; } .reorder-t col.c-ord { width: 13%; } .reorder-t col.c-act { width: 15%; }
+.reorder-t td { white-space: normal; overflow-wrap: anywhere; vertical-align: middle; }
+.reorder-t td.n { white-space: nowrap; }
+tr.sup-row td { background: var(--accent-soft); border-left: 4px solid var(--accent); padding-block: 10px; }
+.sup-tag { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-right: 8px; }
+.sup-name { font-family: var(--f-display); font-weight: 600; font-size: 1.02rem; color: var(--ink); }
+.ord-in { width: 72px; padding: 5px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); text-align: right; font-family: var(--f-num); }
+.ord-in.edited { border-color: var(--accent); background: var(--accent-soft); }
+.linkbtn { border: 0; background: none; color: var(--muted); font-size: .75rem; text-decoration: underline; padding: 2px 0; }
+.cell-add { border: 1px dashed var(--line); background: transparent; color: var(--muted); width: 28px; height: 26px; border-radius: 6px; font-weight: 700; line-height: 1; }
+.cell-add:hover, .cell-add:focus-visible { border-color: var(--lc, var(--accent)); color: var(--lc, var(--accent)); border-style: solid; }
+.cell-rm { border: 0; background: transparent; color: var(--muted); width: 22px; height: 22px; margin-left: 4px; border-radius: 4px; opacity: 0; line-height: 1; font-size: 1rem; }
+tr:hover .cell-rm, .cell-rm:focus-visible { opacity: 1; }
+.cell-rm:hover { background: var(--bad-soft); color: var(--bad); }
+@media (hover: none) { .cell-rm { opacity: .55; } }
+.for-loc { display: flex; align-items: center; gap: 8px; padding: 10px 11px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--lc) 45%, var(--line)); background: color-mix(in srgb, var(--lc) 10%, var(--surface)); font-weight: 600; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); z-index: 30; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: .9rem; max-width: calc(100% - 32px); }
 .state { padding: 60px 16px; text-align: center; color: var(--muted); }
 @media (prefers-reduced-motion: no-preference) { .sheet { animation: up .18s ease-out; } @keyframes up { from { transform: translateY(16px); opacity: .6; } } }
@@ -512,11 +530,13 @@ const S = {
   db: null, user: null, uid: null, dl: null, canWrite: true, status: "loading",
   locs: [], items: [], moves: [], settings: { ...DEFAULT_SETTINGS }, got: {},
   loc: "all", tab: "overview", q: "", cat: "", lowOnly: false,
-  hType: "", hQ: "", names: {}, reqs: [], imp: null,
+  hType: "", hQ: "", names: {}, reqs: [], imp: null, orders: {},
   rep: { preset: "month", from: "", to: "", data: null, loading: false, show: { in: false, use: true, waste: true }, item: "" },
 };
 try { const v = localStorage.getItem("stock.loc"); if (v) S.loc = v; const t = localStorage.getItem("stock.tab"); if (t) S.tab = t; } catch (e) {}
 try { S.unlockedHash = sessionStorage.getItem("stock.unlock") || ""; } catch (e) { S.unlockedHash = ""; }
+try { S.orders = JSON.parse(localStorage.getItem("stock.orders") || "{}") || {}; } catch (e) { S.orders = {}; }
+const saveOrders = () => { try { localStorage.setItem("stock.orders", JSON.stringify(S.orders)); } catch (e) {} };
 
 const TABS = [["overview", "Overview"], ["dashboard", "Dashboard"], ["stock", "Stock"], ["history", "History"], ["requests", "Requests"], ["reorder", "Reorder"], ["reports", "Reports"], ["settings", "Settings"]];
 const TYPES = {
@@ -660,11 +680,11 @@ function itemOptions(sel) {
   return `<option value="">Choose an item…</option>` + [...cats, ""].map((c) => { const list = byCat(c); if (!list.length) return ""; const o = list.map((i) => `<option value="${esc(i.id)}" ${i.id === sel ? "selected" : ""}>${esc(i.name)} (${esc(i.unit)})</option>`).join(""); return c ? `<optgroup label="${esc(c)}">${o}</optgroup>` : o; }).join("");
 }
 function reqForm(opts = {}) {
-  const from = opts.from || (S.loc !== "all" ? S.loc : (restaurantLocs()[0]?.id || S.locs[0]?.id));
+  const from = S.loc !== "all" ? S.loc : (opts.from || restaurantLocs()[0]?.id || S.locs[0]?.id);
   const other = S.locs.filter((l) => l.id !== from); const to = (other.find((l) => l.kind === "restaurant") || other.find((l) => l.kind === "shared") || other[0])?.id;
   openModal(`${sheetHead("Ask for stock", "The other location sees this on its Requests tab.")}
   <form class="form" id="reqForm">
-    <div class="two"><div class="field"><label for="qFrom">Who needs it</label><select id="qFrom">${locOptions(from)}</select></div>
+    <div class="two">${S.loc !== "all" ? `<div class="field"><span class="lab">For</span><div class="for-loc" style="--lc:${locColor(from)}">${lname(from)}</div><input type="hidden" id="qFrom" value="${esc(from)}"></div>` : `<div class="field"><label for="qFrom">Who needs it</label><select id="qFrom">${locOptions(from)}</select></div>`}
     <div class="field"><label for="qTo">Ask</label><select id="qTo">${locOptions(to, from)}</select></div></div>
     <div class="field"><label for="qItem">Item</label><select id="qItem" required>${itemOptions(opts.item || "")}</select></div>
     <div class="field"><label for="qQty">Quantity</label><div class="unit-in"><input id="qQty" type="number" step="any" min="0" inputmode="decimal" required><span id="qUnit">unit</span></div></div>
@@ -875,7 +895,10 @@ function vStock() {
   else if (S.loc === "all") {
     const total = { v: 0 };
     body = `<div class="table-wrap"><table><thead><tr><th>Item</th>${S.locs.map((l) => `<th class="n loc-col" style="--lc:${locColor(l.id)}">${esc(l.name)}</th>`).join("")}<th class="n">Total</th>${unlocked() ? `<th class="n">Value</th>` : ""}</tr></thead><tbody>
-    ${items.map((it) => { let t = 0; const cells = S.locs.map((l) => { if (!stockedAt(it, l.id)) return `<td class="n cell-na loc-col" style="--lc:${locColor(l.id)}">–</td>`; const q = qtyAt(it, l.id); t += q; const s = statusOf(it, l.id); return `<td class="n loc-col ${s !== "ok" ? "cell-" + s : ""}" style="--lc:${locColor(l.id)}" title="${STATUS_LABEL[s]}">${num(q)}</td>`; }).join("");
+    ${items.map((it) => { let t = 0; const cells = S.locs.map((l) => { const lc = locColor(l.id), ln = esc(l.name);
+      if (!stockedAt(it, l.id)) return `<td class="n cell-na loc-col" style="--lc:${lc}">${S.canWrite ? `<button class="cell-add" data-act="cell-add" data-item="${esc(it.id)}" data-loc="${esc(l.id)}" title="Keep ${esc(it.name)} at ${ln}" aria-label="Add ${esc(it.name)} to ${ln}">+</button>` : "–"}</td>`;
+      const q = qtyAt(it, l.id); t += q; const s = statusOf(it, l.id);
+      return `<td class="n loc-col ${s !== "ok" ? "cell-" + s : ""}" style="--lc:${lc}" title="${STATUS_LABEL[s]}">${num(q)}${S.canWrite ? `<button class="cell-rm" data-act="cell-rm" data-item="${esc(it.id)}" data-loc="${esc(l.id)}" title="Stop keeping it at ${ln}" aria-label="Remove ${esc(it.name)} from ${ln}">×</button>` : ""}</td>`; }).join("");
       const v = Math.max(0, t) * (+it.cost || 0); total.v += v;
       return `<tr class="click" data-act="item" data-id="${esc(it.id)}"><td><b>${esc(it.name)}</b> <span class="muted small">${esc(it.unit)}</span><div class="small muted">${esc(it.category || "")}</div></td>${cells}<td class="n">${num(t)}</td>${unlocked() ? `<td class="n">${money(v)}</td>` : ""}</tr>`; }).join("")}
     </tbody>${unlocked() ? `<tfoot><tr><td colspan="${S.locs.length + 2}">Total stock value</td><td class="n">${money(total.v)}</td></tr></tfoot>` : ""}</table></div>`;
@@ -920,9 +943,10 @@ function reorderGroups() {
   for (const { it, l } of lowList(visibleLocs())) {
     const have = qtyAt(it, l), min = minAt(it, l);
     const target = min > 0 ? min * 2 : 1;
-    const need = Math.max(0, Math.ceil((target - have) * 100) / 100);
+    const suggested = Math.max(0, Math.ceil((target - have) * 100) / 100); const ok = it.id + "|" + l;
+    const edited = ok in S.orders; const need = edited ? S.orders[ok] : suggested;
     const key = it.supplier || "No supplier set";
-    (groups[key] ||= []).push({ it, l, have, min, need });
+    (groups[key] ||= []).push({ it, l, have, min, need, suggested, edited, ok });
   }
   return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
 }
@@ -931,9 +955,8 @@ function vReorder() {
   const shared = sharedLocs();
   return `<section class="panel"><div class="panel-h"><div><h2>Reorder list</h2><div class="small muted">Items at or below their minimum. Suggested order brings stock up to twice the minimum.</div></div>
   ${g.length ? `<div class="toolbar"><button class="btn" data-act="copy-reorder">Copy as text</button><button class="btn" data-act="export-reorder">Download CSV</button></div>` : ""}</div>
-  ${g.length ? g.map(([sup, rows]) => `<div class="panel-b"><h3 style="margin:6px 0">${esc(sup)}</h3></div><div class="table-wrap"><table><thead><tr><th>Item</th><th>Location</th><th class="n">Have</th><th class="n">Min</th><th class="n">Order</th><th></th></tr></thead><tbody>
-    ${rows.map((r) => `<tr><td><b>${esc(r.it.name)}</b></td><td>${lname(r.l)}</td><td class="n">${num(r.have)}</td><td class="n">${num(r.min)}</td><td class="n"><b>${num(r.need)}</b> ${esc(r.it.unit)}</td><td>${S.canWrite ? (shared.length && !shared.includes(r.l) && locById(r.l)?.kind === "restaurant" && shared.some((s) => stockedAt(r.it, s) && qtyAt(r.it, s) > 0) ? `<button class="btn sm" data-act="record" data-type="transfer" data-item="${esc(r.it.id)}" data-loc="${esc(shared.find((s) => qtyAt(r.it, s) > 0))}" data-to="${esc(r.l)}">Take from shared</button>` : `<button class="btn sm" data-act="record" data-type="in" data-item="${esc(r.it.id)}" data-loc="${esc(r.l)}">Receive</button>`) : ""}</td></tr>`).join("")}
-  </tbody></table></div>`).join("") : `<div class="empty">Nothing to reorder${S.loc !== "all" ? " at " + esc(locName(S.loc)) : ""}. Set a minimum on items to get alerts here.</div>`}
+  ${g.length ? `<div class="panel-b small muted">Change any order amount below. Your changes are used when you copy or download the list, and stay on this device.</div><div class="table-wrap"><table class="reorder-t"><colgroup><col class="c-item"><col class="c-loc"><col class="c-n"><col class="c-n"><col class="c-ord"><col class="c-act"></colgroup><thead><tr><th>Item</th><th>Location</th><th class="n">Have</th><th class="n">Min</th><th class="n">Order</th><th></th></tr></thead><tbody>` + g.map(([sup, rows]) => `<tr class="sup-row"><td colspan="6"><span class="sup-tag">Supplier</span><span class="sup-name">${esc(sup)}</span> <span class="small muted">· ${rows.length} item${rows.length > 1 ? "s" : ""}</span></td></tr>
+    ${rows.map((r) => `<tr><td><b>${esc(r.it.name)}</b></td><td>${lname(r.l)}</td><td class="n">${num(r.have)}</td><td class="n">${num(r.min)}</td><td class="n"><input class="ord-in ${r.edited ? "edited" : ""}" type="number" min="0" step="any" inputmode="decimal" value="${r3(r.need)}" data-key="${esc(r.ok)}" aria-label="Order amount for ${esc(r.it.name)}"> <span class="small muted">${esc(r.it.unit)}</span>${r.edited ? `<div><button class="linkbtn" data-act="ord-reset" data-id="${esc(r.ok)}">Use suggested (${num(r.suggested)})</button></div>` : ""}</td><td>${S.canWrite ? (shared.length && !shared.includes(r.l) && locById(r.l)?.kind === "restaurant" && shared.some((s) => stockedAt(r.it, s) && qtyAt(r.it, s) > 0) ? `<button class="btn sm" data-act="record" data-type="transfer" data-item="${esc(r.it.id)}" data-loc="${esc(shared.find((s) => qtyAt(r.it, s) > 0))}" data-to="${esc(r.l)}">Take from shared</button>` : `<button class="btn sm" data-act="record" data-type="in" data-item="${esc(r.it.id)}" data-loc="${esc(r.l)}">Receive</button>`) : ""}</td></tr>`).join("")}`).join("") + `</tbody></table></div>` : `<div class="empty">Nothing to reorder${S.loc !== "all" ? " at " + esc(locName(S.loc)) : ""}. Set a minimum on items to get alerts here.</div>`}
   </section>`;
 }
 
@@ -1281,6 +1304,15 @@ document.addEventListener("click", async (ev) => {
   if (act === "item") return itemDetail(id);
   if (act === "record") { ev.stopPropagation(); return openRecord({ type: el.dataset.type, item: el.dataset.item, loc: el.dataset.loc, to: el.dataset.to }); }
   if (act === "req-new") return reqForm();
+  if (act === "ord-reset") { delete S.orders[id]; saveOrders(); return render(); }
+  if (act === "cell-add") { const it = itemById(el.dataset.item), l = el.dataset.loc; if (!it) return; el.disabled = true;
+    try { await S.db.doc("items/" + it.id).update({ locs: [...new Set([...(it.locs || []), l])] }); toast(`${it.name} added to ${locName(l)}`); } catch (e) { el.disabled = false; toast(writeErr(e)); } return; }
+  if (act === "cell-rm") { const it = itemById(el.dataset.item), l = el.dataset.loc; if (!it) return; const q = qtyAt(it, l);
+    if (q === 0) { try { await S.db.doc("items/" + it.id).update({ locs: (it.locs || []).filter((x) => x !== l) }); toast(`${it.name} removed from ${locName(l)}`); } catch (e) { toast(writeErr(e)); } return; }
+    return openModal(`${sheetHead("Remove " + esc(it.name) + " from " + esc(locName(l)) + "?")}<div class="hint warn">${esc(locName(l))} still has <b>${num(q)} ${esc(it.unit)}</b>. Removing it sets this to 0 and records it in History. To keep the stock, move it to another location first.</div><div id="cmErr" class="err"></div>
+      <div class="sheet-f"><button class="btn" data-act="close">Keep it</button><button class="btn danger" data-act="cell-rm-yes" data-item="${esc(it.id)}" data-loc="${esc(l)}">Remove from ${esc(locName(l))}</button></div>`); }
+  if (act === "cell-rm-yes") { const it = itemById(el.dataset.item), l = el.dataset.loc; el.disabled = true;
+    try { await applyMove({ type: "count", itemId: it.id, loc: l, qty: 0, note: "Removed from this location" }); await S.db.doc("items/" + it.id).update({ locs: (itemById(it.id).locs || []).filter((x) => x !== l) }); closeModal(); toast(`${it.name} removed from ${locName(l)}`); } catch (e) { el.disabled = false; $("#cmErr").textContent = writeErr(e); } return; }
   if (act === "req-send") { const r = S.reqs.find((x) => x.id === id); if (r) openRecord({ type: "transfer", item: r.itemId, loc: r.to, to: r.from, qty: r.qty, reqId: r.id }); return; }
   if (act === "req-reply") return reqReplyForm(id);
   if (act === "req-reply-send" || act === "req-decline") { const note = $("#rpNote").value.trim(); if (act === "req-reply-send" && !note) return ($("#rpErr").textContent = "Write a message first.");
@@ -1338,6 +1370,7 @@ document.addEventListener("change", (ev) => {
   else if (t.id === "rFor") { R.forLoc = t.value; recHint(); }
   else if (t.id === "qItem" || t.id === "qFrom" || t.id === "qTo") { if (t.id === "qFrom") { const to = $("#qTo").value; $("#qTo").innerHTML = locOptions(to === t.value ? "" : to, t.value); } reqHint(); }
   else if (t.id === "impFile") { const f = t.files && t.files[0]; $("#impErr").textContent = ""; if (!f) return; const rd = new FileReader(); rd.onload = () => { const res = readImport(String(rd.result)); if (res.error) { S.imp = null; $("#impPrev").innerHTML = ""; $("#impGo").disabled = true; $("#impErr").textContent = res.error; } else { S.imp = res.items; drawImportPreview(); } }; rd.readAsText(f); }
+  else if (t.classList && t.classList.contains("ord-in")) { const v = parseFloat(t.value); if (isNaN(v) || v < 0) { delete S.orders[t.dataset.key]; } else S.orders[t.dataset.key] = r3(v); saveOrders(); render(); }
   else if (t.id === "repItem") { S.rep.item = t.value; render(); }
   else if (t.id.startsWith("ser-")) { S.rep.show[t.id.slice(4)] = t.checked; render(); }
   else if (t.id === "repPreset") { S.rep.preset = t.value; S.rep.data = null; render(); }
